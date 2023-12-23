@@ -1,0 +1,34 @@
+By camera serial number (will not work with Microsoft Life Cams!):
+	sudo apt-get install v4l-utils
+
+	v4l2-ctl --list-devices
+		search for lines containing "/dev/"
+
+	v4l2-ctl -d /dev/videoX -D
+
+		where 'X' is a device listed above
+		search for "Video Capture" to distinguish from "metadata device"
+		search for "Serial           :" to find the specific camera
+	
+	v4l2-ctl -d /dev/videoX --list-formats-ext
+		will list both "raw" and "mpeg" formats and sample rates
+
+
+By physical Raspberry Pi USB ports:
+	Looking at the ports themselves:
+                                                                                    v
+		Upper Left:
+			/sys/devices/platform/soc/3f980000.usb/usb1/1-1/1-1.1/1-1.1.2/1-1.1.2:1.2/input/input?
+		Lower Left:
+			/sys/devices/platform/soc/3f980000.usb/usb1/1-1/1-1.1/1-1.1.3/1-1.1.3:1.2/input/input?
+
+                                                                            v
+		Lower Right:
+			/sys/devices/platform/soc/3f980000.usb/usb1/1-1/1-1.2/1-1.2:1.2/input/input?
+		Upper Right:
+			/sys/devices/platform/soc/3f980000.usb/usb1/1-1/1-1.3/1-1.3:1.2/input/input?
+
+
+	Within the above directory, inspect 'device/video4linux/video?/dev'.  You will see "major:minor"
+	driver revision.  Compare this to the "major, minor" identifiers retrieved from "ls -l /dev/video*".
+	The names of the directories under 'device/video4linux' are also the name of the devices under /dev.
