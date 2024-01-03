@@ -39,7 +39,7 @@ def load_cscore():
 logging.basicConfig(level=logging.DEBUG)
 
 # Set global variables
-calibration_dir = "../Config"
+calibration_dir = "../config"
 
 def find_cams(port: int):
     file = f"/sys/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.{port}/1-1.{port}:1.0/video4linux"

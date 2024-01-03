@@ -25,7 +25,7 @@ import numpy as np
 from threading import Thread
 
 # Set global variables
-calibration_dir = '../Config'
+calibration_dir = '../config'
 #calibration_dir = 'C:/FRC-Test/Config/Calibration'
 
 
