@@ -2,14 +2,22 @@ import pyapriltags
 import cv2
 import time
 import numpy as np
-from threading import Thread
+import threading
 import os
 
+tls = threading.local()
 
+def get_tls(name: str, init):
+    var = getattr(tls, name, None)
+    if var is None:
+        var = init()
+        setattr(tls, name, var)
+    return var
+
+cams = [0, 2]
 params = (8.25, 8.25, 320, 240)
 tag_size = 0.16
 
-frames = []
 kill = False
 
 def find_cams(port: int):
@@ -20,12 +28,14 @@ def find_cams(port: int):
         if len(files) > 0:
             return files[0]
 
+def tls_detector() -> pyapriltags.Detector:
+    return get_tls("april_dt", lambda: pyapriltags.Detector(families="tag36h11"))
+
 class Runner:
     def __init__(self, idx, port=None, *, id=None):
         self.idx = idx
         self.port = port
         self.id = id if id is not None else find_cams(port)
-        self.detector = pyapriltags.Detector(families="tag36h11")
         self.camera = cv2.VideoCapture(self.id)
         self.camera.set(cv2.CAP_PROP_BRIGHTNESS, 50)  # Brightness
         self.camera.set(cv2.CAP_PROP_EXPOSURE, 100)  # Exposure
@@ -37,18 +47,24 @@ class Runner:
         
         
     def tick(self):
-        print(f"tick for {self.id}")
+        if not self.camera.isOpened():
+            if self.lastGrabbed:
+                print("Camera is not open")
+                self.lastGrabbed = False
+                return
+
         grabbed, frame = self.camera.read()
-        
+
         if not grabbed:
             if self.lastGrabbed:
                 print("Failed to grab frame")
                 self.lastGrabbed = False
+                return
 
         self.lastGrabbed = True
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        results = self.detector.detect(gray, True, params, tag_size)
+        results = tls_detector().detect(gray, True, params, tag_size)
 
         for r in results:
             (ptA, ptB, ptC, ptD) = r.corners
@@ -82,13 +98,10 @@ class Runner:
     def show(self):
         cv2.imshow("Camera " + str(self.port if self.port is not None else self.id), self.frame)
 
-cams = [0, 2]
-
-
 runners = [Runner(idx, id=port) for (idx, port) in enumerate(cams)]
 
 def run_multi():
-    threads = [Thread(target=Runner.launch, name="camera" + str(this.port), args=(this,)) for this in runners]
+    threads = [threading.Thread(target=Runner.launch, name="camera" + str(this.port), args=(this,)) for this in runners]
 
     for thread in threads:
         thread.start()
@@ -104,15 +117,14 @@ def run_multi():
 
 def run_single():
     while True:
-        print("main tick")
         for cam in runners:
             cam.tick()
             cam.show()
         
-        if cv2.waitKey(1) == 27:
+        if cv2.waitKey(10) == 27:
             cv2.destroyAllWindows()
             kill = True
             break
-        print("end")
+
 
 run_single()
