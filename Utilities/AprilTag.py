@@ -32,8 +32,7 @@ def tls_detector() -> pyapriltags.Detector:
     return get_tls("april_dt", lambda: pyapriltags.Detector(families="tag36h11"))
 
 class Runner:
-    def __init__(self, idx, port=None, *, id=None):
-        self.idx = idx
+    def __init__(self, port=None, *, id=None):
         self.port = port
         self.id = id if id is not None else find_cams(port)
         self.camera = cv2.VideoCapture(self.id)
@@ -52,8 +51,10 @@ class Runner:
                 print("Camera is not open")
                 self.lastGrabbed = False
             return
-
+        
+        print(f"before read of {self.id}")
         grabbed, frame = self.camera.read()
+        print(f"after read of {self.id}")
 
         if not grabbed:
             if self.lastGrabbed:
@@ -98,15 +99,17 @@ class Runner:
     def show(self):
         cv2.imshow("Camera " + str(self.port if self.port is not None else self.id), self.frame)
 
-runners = [Runner(idx, id=port) for (idx, port) in enumerate(cams)]
+runners = [Runner(id=port) for port in cams]
 
 def run_multi():
+    global kill
+
     threads = [threading.Thread(target=Runner.launch, name="camera" + str(this.port), args=(this,)) for this in runners]
 
     for thread in threads:
         thread.start()
 
-    while True:
+    while not kill:
         for cam in runners:
             cam.show()
         
@@ -116,6 +119,8 @@ def run_multi():
             break
 
 def run_single():
+    global kill
+
     while True:
         for cam in runners:
             cam.tick()
@@ -127,4 +132,4 @@ def run_single():
             break
 
 
-run_single()
+run_multi()
