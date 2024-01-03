@@ -16,13 +16,11 @@
 
 '''FRC Stereo Camera Library - Provides stereo camera methods and utilities'''
 
-# System imports
 import os
-
-# Module Imports
 import cv2 as cv
 import numpy as np
 from threading import Thread
+from typing import *
 
 # Set global variables
 calibration_dir = '../config'
@@ -33,7 +31,7 @@ calibration_dir = '../config'
 class FRCStereoCam:
 
     # Define initialization
-    def __init__(self, leftSrc, rightSrc, name, settings):
+    def __init__(self, leftSrc, rightSrc, name: str, settings: Dict[str, Any]):
 
         # Name the stream
         self.name = name
@@ -118,26 +116,26 @@ class FRCStereoCam:
         (self.rightGrabbed, self.rightFrame) = self.rightCamStream.read()
 
 
-    # Define camera thread start method
-    def start_camera_thread(self):
+    # Run camera updates in another thread
+    def start_camera_thread(self) -> FRCStereoCam:
 
-        #Define camera thread
-        camThread = Thread(target=self.update, name=self.name, args=())
+        self.stopped = False
+        camThread = Thread(target=self._run_in_thread, name=self.name, args=())
         camThread.daemon = True
         camThread.start()
 
         return self
 
 
-    # Define camera thread stop method
-    def stop_camera_thread(self):
+    # Send signal to stop
+    def stop_camera_thread(self) -> None:
 
-        #Set stop flag
+        # Set stop flag
         self.stopped = True
 
 
-    # Define camera update method
-    def update(self):
+    # Run self in other thread. Not to be called directly
+    def _run_in_thread(self) -> None:
 
         # Main thread loop
         while True:
@@ -151,8 +149,8 @@ class FRCStereoCam:
             self.rightGrabbed, self.rightFrame = self.rightCamStream.read()
 
 
-    # Define frame read method
-    def read_frame(self):
+    # Grab a frame from the camera, possibly with some preprocessing
+    def read_frame(self) -> Tuple[np.ndarray, np.ndarray]:
 
         # Declare frame for undistorted image
         newLeftFrame = np.zeros(shape=(self.width, self.height, 3), dtype=np.uint8)
@@ -203,54 +201,8 @@ class FRCStereoCam:
         # Return the most recent frame
         return newLeftFrame, newRightFrame
 
-
-    # Define frame read method
-    def read_frame_threaded(self):
-
-        # Undistort images
-        if self.undistort_left == True and self.undistort_right == True:
-
-            left_h, left_w = self.leftFrame.shape[:2]
-            (new_left_matrix, left_roi) = cv.getOptimalNewCameraMatrix(
-                                            self.left_cam_matrix,
-                                            self.left_distort_coeffs,
-                                            (left_w,left_h),
-                                            1,
-                                            (left_w,left_h))
-            newLeftFrame = cv.undistort(self.leftFrame, 
-                                        self.left_cam_matrix,
-                                        self.left_distort_coeffs, 
-                                        None,
-                                        new_left_matrix)
-            x,y,w,h = left_roi
-            newLeftFrame = newLeftFrame[y:y+h,x:x+w]
-
-            right_h, right_w = self.rightFrame.shape[:2]
-            (new_right_matrix, right_roi) = cv.getOptimalNewCameraMatrix(
-                                            self.right_cam_matrix,
-                                            self.right_distort_coeffs,
-                                            (right_w,right_h),
-                                            1,
-                                            (right_w,right_h))
-            newRightFrame = cv.undistort(self.rightFrame, 
-                                        self.right_cam_matrix,
-                                         self.right_distort_coeffs, 
-                                         None,
-                                         new_right_matrix)
-            x,y,w,h = right_roi
-            newRightFrame = newRightFrame[y:y+h,x:x+w]
-
-        else:
-            
-            newLeftFrame = self.leftFrame
-            newRightFrame = self.rightFrame
-
-        # Return the most recent frame
-        return newLeftFrame, newRightFrame
-
-
-    # Define camera release method
-    def release_cam(self):
+    # Release camera resources
+    def release_cam(self) -> None:
 
         # Release the camera resource
         self.leftCamStream.release()

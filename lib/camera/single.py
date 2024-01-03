@@ -19,8 +19,7 @@
 import sys
 import os
 import logging
-
-# Module Imports
+from typing import *
 import cv2 as cv
 import numpy as np
 from threading import Thread
@@ -55,7 +54,7 @@ class FRCWebCam:
     config = {"": {}}
     init = False
     # Define initialization
-    def __init__(self, name, timestamp, videofile = None, csname = None):
+    def __init__(self, name: str, timestamp: str, videofile: Optional[str] = None, csname: Optional[str] = None):
         self.name = name
         port = self.get_config("PORT", None)
         if port is not None:
@@ -149,7 +148,7 @@ class FRCWebCam:
         self.log_file.write("Webcam initialization complete\n")
 
     @staticmethod
-    def read_config_file(file, reload = False):
+    def read_config_file(file, reload: bool = False) -> bool:
         if FRCWebCam.init and not reload:
             return True
         FRCWebCam.init = True
@@ -195,7 +194,8 @@ class FRCWebCam:
         
         return True
 
-    def get_config(self, name, default):
+    # Get a camera configuration value
+    def get_config(self, name: str, default: str) -> str:
         if self.name in FRCWebCam.config:
             cfg = FRCWebCam.config[self.name]
             if name in cfg:
@@ -206,26 +206,25 @@ class FRCWebCam:
         return default
 
 
-    # Define camera thread start method
-    def start_camera_thread(self):
+    # Run camera updates in another thread
+    def start_camera_thread(self) -> FRCWebCam:
 
-        # Define camera thread
-        camThread = Thread(target=self.update, name=self.name, args=())
+        self.stopped = False
+        camThread = Thread(target=self._run_in_thread, name=self.name, args=())
         camThread.daemon = True
         camThread.start()
 
         return self
 
 
-    # Define camera thread stop method
-    def stop_camera_thread(self):
+    # Send signal to stop
+    def stop_camera_thread(self) -> None:
 
-        # Set stop flag
         self.stopped = True    
 
 
-    # Define threaded update method
-    def update(self):
+    # Run self in other thread. Not to be called directly
+    def _run_in_thread(self) -> None:
 
         # Main thread loop
         while True:
@@ -238,8 +237,8 @@ class FRCWebCam:
             self.grabbed, self.frame = self.camStream.read()
 
 
-    # Define frame read method
-    def read_frame(self):
+    # Grab a frame from the camera, possibly with some preprocessing
+    def read_frame(self) -> np.ndarray:
 
         # Declare frame for undistorted image
         newFrame = np.zeros(shape=(self.width, self.height, 3), dtype=np.uint8)
@@ -280,8 +279,8 @@ class FRCWebCam:
         return newFrame
 
 
-    # Define video writing method
-    def write_video(self, img):
+    # Write a frame to the video file
+    def write_video(self, img: np.ndarray) -> bool:
 
         # Check if write is opened
         if self.camWriter.isOpened():
@@ -304,7 +303,7 @@ class FRCWebCam:
             return False
 
 
-    # Define camera release method
+    # Release all camera resources
     def release_cam(self):
 
         # Release the camera resource
@@ -317,14 +316,16 @@ class FRCWebCam:
         self.log_file.write("Webcam closed. Video writer closed.\n")
         self.log_file.close()
 
-    def use_libs(self, *libs):
+    # Apply vision processors to a single frame
+    def use_libs(self, *libs) -> List[Any]:
         frame = self.read_frame()
         return (frame, *[lib.find_objects(frame, self.width, self.height, self.fov) for lib in libs])
     
     def _use_libs_update(self, callback, *libs):
         callback(*self.use_libs(*libs))
 
-    def use_libs_async(self, *libs, callback = lambda _: None, name = "vision"):
+    # Apply vision processors to a single frame, running in another thread
+    def use_libs_async(self, *libs, callback = lambda _: None, name: str = "vision") -> Thread:
         thread = Thread(target=self._use_libs_update, args=(callback, *libs), name=name)
         thread.daemon = True
         thread.start()

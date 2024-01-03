@@ -13,27 +13,22 @@
 
 '''FRC Navx Library - Provides threaded methods and utilities for Navx board'''
 
-# System imports
-import sys
-import importlib as imp
 
-# Setup paths
 sys.path.append('/usr/local/lib/vmxpi/')
 
-# Module imports
-import math
+import sys
+import importlib as imp
+from typing import *
 import time
 import datetime
-import logging
-from threading import Thread
 import vmxpi_hal_python as vmxpi
 
 
-# Define the Navx class
+# Class for interfacing with the NavX boards
 class FRCNavx:
 
-    # Define initialization
-    def __init__(self, name, sleep = True):
+    # Initialize self. Include whether or not we should sleep to initialize it
+    def __init__(self, name: str, sleep: bool = True):
 
         self.vmx = vmxpi.VMXPi(False, 50)
 
@@ -75,35 +70,35 @@ class FRCNavx:
         self.date = []
        
 
-    # Define read angle method
-    def read_angle(self):
+    # Get the angle from straight ahead
+    def read_angle(self) -> float:
 
         self.angle = round(self.vmx.getAHRS().GetAngle(), 2)
         return self.angle
 
 
-    # Define read yaw method
-    def read_yaw(self):
+    # Get the yaw
+    def read_yaw(self) -> float:
 
         self.yaw = round(self.vmx.getAHRS().GetYaw(), 2)
         return self.yaw
 
 
-    # Define read pitch method
-    def read_pitch(self):
+    # Get the pitch
+    def read_pitch(self) -> float:
 
         self.pitch = round(self.vmx.getAHRS().GetPitch() - self.pitchOffset, 2)
         return self.pitch
 
-    # Define read pitch method
-    def read_roll(self):
+    # Get the roll
+    def read_roll(self) -> float:
 
         self.roll = round(self.vmx.getAHRS().GetRoll(), 2)
         return self.roll
 
 
-    # Define reset gyro method
-    def reset(self, sleep = True):
+    # Reset the gyroscope, possibly sleeping to give it time to reinitialize.
+    def reset(self, sleep: bool = True):
 
         if sleep:
             time.sleep(15)
@@ -113,40 +108,42 @@ class FRCNavx:
         ahrs.ZeroYaw()
         self.pitchOffset = ahrs.GetPitch()
 
-    def read_orientation(self):
+    # Get the tuple (yaw, pitch, roll)
+    def read_orientation(self) -> Tuple[float, float, float]:
         return (self.read_yaw(), self.read_pitch(), self.read_roll())
 
-    # What could this possibly do?
-    def read_acceleration(self):
+    # Get acceleration vector as a tuple
+    def read_acceleration(self) -> Tuple[float, float, float]:
         ahrs = self.vmx.getAHRS()
         return (ahrs.GetWorldLinearAccelX(), ahrs.GetWorldLinearAccelY(), ahrs.GetWorldLinearAccelZ())
 
-    # What could this possibly do?
-    def read_velocity(self):
+    # Get velocity as a tuple
+    def read_velocity(self) -> Tuple[float, float, float]:
         ahrs = self.vmx.getAHRS()
         return (ahrs.GetVelocityX(), ahrs.GetVelocityY(), ahrs.GetVelocityZ())
     
-    def read_position(self):
+    # Get position (displacement) as a tuple
+    def read_position(self) -> Tuple[float, float, float]:
         ahrs = self.vmx.getAHRS()
         return (ahrs.GetDisplacementX(), ahrs.GetDisplacementY(), ahrs.GetDisplacementZ())
     
 
-    # Define read time method
+    # Get the time from the RTC
     def read_time(self):
 
         self.time = self.vmx.getTime().GetRTCTime()
         return self.time
     
 
-    # Define read date method
+    # Get the date from the RTC
     def read_date(self):
 
         self.date = self.vmx.getTime().GetRTCDate()
         return self.date
     
 
-    # Define set time method
-    def set_time(self, newtime):
+    # Set the time, taking hours, minutes, and seconds
+    def set_time(self, newtime: Tuple[int, int, int]) -> bool:
 
         success = self.vmx.getTime().SetRTCTime(newtime[0], 
                                                 newtime[1],
@@ -155,8 +152,8 @@ class FRCNavx:
         return success
     
 
-    # Define set date method
-    def set_date(self, newdate):
+    # Set the date, taking a tuple
+    def set_date(self, newdate: Tuple[int, int, int, int]) -> bool:
 
         success = self.vmx.getTime().SetRTCDate(newdate[0],
                                                 newdate[1],
@@ -167,7 +164,7 @@ class FRCNavx:
     
 
     # Define get raw time method
-    def get_raw_time(self):
+    def get_raw_time(self) -> str:
 
         currentTime = self.read_time()
         currentDate = self.read_date()
@@ -175,56 +172,25 @@ class FRCNavx:
         return timeString
         
 
-    # Define day of week conversion method
-    def get_day_name(self, weekday):
-
-        if weekday == 1:
-            return 'Monday'
-        elif weekday == 2:
-            return 'Tuesday'
-        elif weekday == 3:
-            return 'Wednesday'
-        elif weekday == 4:
-            return 'Thursday'
-        elif weekday == 5:
-            return 'Friday'
-        elif weekday == 6:
-            return 'Saturday'
-        elif weekday == 7:
-            return 'Sunday'
+    # Get the name of a weekday from its number
+    def get_day_name(self, weekday: int) -> str:
+        return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][weekday % 7]
     
 
     # Define month conversion method
-    def get_month_name(self, month):
-
-        if month == 1:
-            return 'January'
-        elif month == 2:
-            return 'February'
-        elif month == 3:
-            return 'March'
-        elif month == 4:
-            return 'April'
-        elif month == 5:
-            return 'May'
-        elif month == 6:
-            return 'June'
-        elif month == 7:
-            return 'July'
-        elif month == 8:
-            return 'August'
-        elif month == 9:
-            return 'September'
-        elif month == 10:
-            return 'October'
-        elif month == 11:
-            return 'November'
-        elif month == 12:
-            return 'December'
-    
-
-    # Define year conversion method
-    def get_year(self, year):
-
-        return (year + 2000)
+    def get_month_name(self, month: int):
+        return [
+            "December",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November"
+        ][month % 12]
 

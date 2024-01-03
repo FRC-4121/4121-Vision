@@ -5,10 +5,10 @@ def calc_offset(x, w, width):
 
 class FaceVisionLibrary(VisionBase):
 
-    def __init__(self, path = "../config/faces.xml"):
+    def __init__(self, path: str = "../config/faces.xml"):
         self.haar = cv.CascadeClassifier(path)
 
-    def find_objects(self, imgRaw, cameraWidth, cameraHeight, cameraFOV):
+    def find_objects(self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int) -> List[FoundObject]:
         gray = cv.cvtColor(imgRaw, cv.COLOR_BGR2GRAY)
         faces = self.haar.detectMultiScale(
             gray,

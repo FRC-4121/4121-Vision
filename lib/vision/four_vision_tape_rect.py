@@ -1,5 +1,6 @@
 from vision.base import *
 
+# Probably not to be used, doesn't comply with API
 class FourVisionTapeRectVisionLibrary(VisionBase):
 
     # Define class fields

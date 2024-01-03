@@ -8,7 +8,7 @@ class BallOnlyVisionLibrary(VisionBase):
 
     # Locates the cubes and cones in the game (2023)
     # returns a tuple containing (cubes, cones)
-    def find_objects(self, imgRaw, cameraWidth, cameraHeight, cameraFOV):
+    def find_objects(self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int) -> List[FoundObject]:
         
         config = VisionBase.config["BALL" + str(self.color)]
 
@@ -78,9 +78,6 @@ class BallOnlyVisionLibrary(VisionBase):
 
 class BallVisionLibrary(VisionBase):
 
-    # Define class fields
-    ball_values = []
-
 
     # Define class initialization
     def __init__(self, color):
@@ -88,7 +85,7 @@ class BallVisionLibrary(VisionBase):
 
     # Locates the cubes and cones in the game (2023)
     # returns a tuple containing (cubes, cones)
-    def find_objects(self, imgRaw, cameraWidth, cameraHeight, cameraFOV):
+    def find_objects(self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int) -> List[FoundObject]:
         config = VisionBase.config["BALL{}".format(self.color)]
 
         # Define variables

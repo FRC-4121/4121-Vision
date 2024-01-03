@@ -1,16 +1,17 @@
 from vision.base import *
 
+# Probably not to be used, doesn't comply with API
 class BlackTapeRectVisionLibrary(VisionBase):
 
     # Define class initialization
-    def __init__(self, cameraFocalLength, cameraMountHeight):
+    def __init__(self, cameraFocalLength: int, cameraMountHeight: int):
         
         self.cameraFocalLength = cameraFocalLength
         self.cameraMountHeight = cameraMountHeight
 
     # Locates the cubes and cones in the game (2023)
     # returns a tuple containing (cubes, cones)
-    def find_objects(self, imgRaw, imageWidth, imageHeight, cameraFOV):
+    def find_objects(self, imgRaw: np.ndarray, imageWidth: int, imageHeight: int, cameraFOV: int):
         
         # Read HSV values from dictionary and make tupples
         hMin = int(VisionBase.config["TAPE"]['HMIN'])

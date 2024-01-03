@@ -10,7 +10,7 @@ class RectVisionLibrary(VisionBase):
 
     # Locates the cubes and cones in the game (2023)
     # returns a tuple containing (cubes, cones)
-    def find_objects(self, imgRaw, cameraWidth, cameraHeight, cameraFOV):
+    def find_objects(self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int) -> List[FoundObject]:
 
         # Read configuration values from dictionary and make tuples
         HSVMin    = (self.cfg('HMIN',   0, int), self.cfg('SMIN',   0, int), self.cfg('VMIN',   0, int))

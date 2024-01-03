@@ -14,11 +14,11 @@
 
 '''FRC Vision Base Class - Provides common vision processing for game elements'''
 
-# Module Imports
 import cv2 as cv
 import numpy as np
 import math
 from threading import Thread
+from typing import *
 
 
 
@@ -27,7 +27,7 @@ class FoundObject:
     # initialize FoundObject, with unused fields defaulting to None
     # ty, x, and y are mandatory
     # all other parameters must be named
-    def __init__(self, ty, x, y, *, w = None, h = None, radius = None, distance = None, angle = None, offset = None, percent = None):
+    def __init__(self, ty, x: int, y: int, *, w: Optional[int] = None, h: Optional[int] = None, radius: Optional[int] = None, distance: Optional[int] = None, angle: Optional[float] = None, offset: Optional[int] = None, percent: Optional[int] = None):
         self.ty = ty
         self.x = x
         self.y = y
@@ -74,7 +74,7 @@ class VisionBase:
 
     # Read vision settings file
     @staticmethod
-    def read_vision_file(file, reload = False):
+    def read_vision_file(file: str, reload: bool = False) -> bool:
         if VisionBase.init and not reload:
             return True
         VisionBase.init = True
@@ -119,7 +119,7 @@ class VisionBase:
         
         return True
 
-    def cfg(self, name, default = None, datatype = str, warn = True):
+    def cfg(self, name: str, default = None, datatype = str, warn: bool = True):
         c = VisionBase.config[self.name]
         if name in c:
             return datatype(c[name])
@@ -133,7 +133,7 @@ class VisionBase:
     # Converts image from BGR color space to HSV and then applies a mask
     # based on "learned" HSV values from the config file.
     # Edge detection can also be imployed before contours are found and returned.
-    def process_image_contours(self, imgRaw, hsvMin, hsvMax, erodeDilate, useCanny):
+    def process_image_contours(self, imgRaw: np.ndarray, hsvMin: int, hsvMax: int, erodeDilate: bool, useCanny: bool) -> List[Any]:
         
         finalImg = ""
 
@@ -176,7 +176,7 @@ class VisionBase:
 
 
     # Define basic image processing method for edge detection
-    def process_image_edges(self, imgRaw):
+    def process_image_edges(self, imgRaw: np.ndarray):
 
         # Blur image to remove noise
         blur = cv.GaussianBlur(imgRaw, (13, 13), 0)
@@ -195,18 +195,20 @@ class VisionBase:
 
     # Method for finding game objects
     # Generic method which will be overidden by child classes
-    def find_objects(self, imgRaw, cameraWidth, cameraHeight, cameraFOV):
+    def find_objects(self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int) -> List[FoundObject]:
 
-        pass
+        return []
 
+    # Update self, storing result. Not meant to be called directly
     def _update(self, imgRaw, cameraWidth, cameraHeight, cameraFOV):
 
         self.data = self.find_objects(imgRaw, cameraWidth, cameraHeight, cameraFOV)
-        self.isFinished = 1
+        self.isFinished = False
 
-    def find_objects_threaded(self, imgRaw, cameraWidth, cameraHeight, cameraFOV, name = "findThread"):
+    # Start running self in another thread
+    def find_objects_threaded(self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int, name: str = "findThread"):
 
-        self.isFinished = 0
+        self.isFinished = True
 
         calcThread = Thread(target=self._update, name=name, args=(imgRaw, cameraWidth, cameraHeight, cameraFOV))
         calcThread.daemon = True
