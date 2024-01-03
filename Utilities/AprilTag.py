@@ -109,11 +109,11 @@ def run_multi():
     for thread in threads:
         thread.start()
 
-    while not kill:
+    while True:
         for cam in runners:
             cam.show()
         
-        if cv2.waitKey(10) == 27:
+        if kill or cv2.waitKey(10) == 27:
             cv2.destroyAllWindows()
             kill = True
             break
@@ -126,7 +126,7 @@ def run_single():
             cam.tick()
             cam.show()
         
-        if cv2.waitKey(10) == 27:
+        if kill or cv2.waitKey(10) == 27:
             cv2.destroyAllWindows()
             kill = True
             break

@@ -24,6 +24,8 @@ import logging
 import cv2 as cv
 from os import getenv
 import ntcore
+from typing import *
+import numpy as np
 
 #Team 4121 module imports
 from camera.single import FRCWebCam
@@ -62,14 +64,22 @@ visionTable = None
 fieldFrame = None
 done = 0
 
-def handle_field_objects(frame, rings):
+def handle_field_objects(frame: np.ndarray, rings: List[FoundObject], tags: List[FoundObject]):
     global done, fieldFrame
 
-    for ring in rings:
-        cv.rectangle(frame, (ring.x, ring.y), ((ring.x + ring.w), (ring.y + ring.h)), (0, 0, 255), 2)
-        cv.putText(frame, "D: {:6.2f}".format(ring.distance), (ring.x + 10, ring.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-        cv.putText(frame, "A: {:6.2f}".format(ring.angle), (ring.x + 10, ring.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-        cv.putText(frame, "O: {:6.2f}".format(ring.offset), (ring.x + 10, ring.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+    if videoTesting:
+        for ring in rings:
+            cv.rectangle(frame, (ring.x, ring.y), ((ring.x + ring.w), (ring.y + ring.h)), (0, 0, 255), 2)
+            cv.putText(frame, "D: {:6.2f}".format(ring.distance), (ring.x + 10, ring.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+            cv.putText(frame, "A: {:6.2f}".format(ring.angle), (ring.x + 10, ring.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+            cv.putText(frame, "O: {:6.2f}".format(ring.offset), (ring.x + 10, ring.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+        for tag in tags:
+            cv.rectangle(frame, (tag.x, tag.y), ((tag.x + tag.w), (tag.y + tag.h)), (255, 0, 255), 2)
+            cv.putText(frame, "D: {:6.2f}".format(tag.distance), (tag.x + 10, tag.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+            cv.putText(frame, "A: {:6.2f}".format(tag.angle), (tag.x + 10, tag.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+            cv.putText(frame, "O: {:6.2f}".format(tag.offset), (tag.x + 10, tag.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+            cv.putText(frame, "I: {:6.2f}".format(tag.ident), (tag.x + 10, tag.y + 60), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+            
     
     fieldFrame = frame
 
@@ -77,9 +87,16 @@ def handle_field_objects(frame, rings):
         visionTable.putNumber("RingsFound", len(rings))
 
         for i in range(len(rings)):
-            visionTable.putNumber("Rings.0.distance", unwrap_or(rings[i].distance, -9999.))
-            visionTable.putNumber("Rings.0.angle", unwrap_or(rings[i].angle, -9999.))
-            visionTable.putNumber("Rings.0.offset", unwrap_or(rings[i].offset, -9999.))
+            visionTable.putNumber(f"Rings.{i}.distance", unwrap_or(rings[i].distance, -9999.))
+            visionTable.putNumber(f"Rings.{i}.angle", unwrap_or(rings[i].angle, -9999.))
+            visionTable.putNumber(f"Rings.{i}.offset", unwrap_or(rings[i].offset, -9999.))
+
+        visionTable.putNumber("TagsFound", len(tags))
+        for i in range(len(tags)):
+            visionTable.putNumber(f"Tags.{i}.distance", unwrap_or(tags[i].distance, -9999.))
+            visionTable.putNumber(f"Tags.{i}.angle", unwrap_or(tags[i].angle, -9999.))
+            visionTable.putNumber(f"Tags.{i}.offset", unwrap_or(tags[i].offset, -9999.))
+            visionTable.putNumber(f"Tags.{i}.id", unwrap_or(tags[i].ident, -9999.))
     
     done += 1
 
@@ -98,6 +115,7 @@ def main():
     VisionBase.read_vision_file(visionFile)
 
     ringLib = RingVisionLibrary()
+    tagLib = AprilTagVisionLibrary()
     
     
     #Open a log file
@@ -112,7 +130,6 @@ def main():
                 nt.startClient3("pi4")
                 nt.setServer("10.41.21.2")
                 visionTable = nt.getTable("vision")
-                navxTable = nt.getTable("navx")
                 networkTablesConnected = True
                 log_file.write('Connected to Networktables on 10.41.21.2 \n')
 
@@ -134,13 +151,19 @@ def main():
             ###################
             done = 0
 
-            fieldCam.use_libs_async(ringLib, callback=handle_field_objects)
+            fieldThread = fieldCam.use_libs_async(ringLib, tagLib, callback=handle_field_objects)
             
-            while done < 1:
+            for i in range(200):
                 time.sleep(0.005)
+                if done == 1:
+                    break
+            else:
+                if fieldThread.is_alive():
+                    print("Field thread is alive for more than one second!")
+                    log_file.write("Field thread is alive for more than one second!\n")
+                    fieldThread.kill()
             
             if videoTesting:
-                
                 cv.imshow("Field", fieldFrame)
 
             #################################

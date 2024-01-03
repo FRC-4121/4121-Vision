@@ -22,8 +22,8 @@ import logging
 from typing import *
 import cv2 as cv
 import numpy as np
-from threading import Thread
 import importlib as imp
+from threads import KillableThread
 
 CvSource = None
 VideoMode = None
@@ -346,8 +346,8 @@ class FRCWebCam:
         return callback(*self.use_libs(*libs))
 
     # Apply vision processors to a single frame, running in another thread
-    def use_libs_async(self, *libs, callback = lambda _: None, name: str = "vision") -> Thread:
-        thread = Thread(target=self._use_libs_update, args=(callback, *libs), name=name)
+    def use_libs_async(self, *libs, callback = lambda _: None, name: str = "vision") -> KillableThread:
+        thread = KillableThread(target=self._use_libs_update, args=(callback, *libs), name=name)
         thread.daemon = True
         thread.start()
         return thread
