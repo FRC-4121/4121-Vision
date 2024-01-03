@@ -51,7 +51,7 @@ class Runner:
             if self.lastGrabbed:
                 print("Camera is not open")
                 self.lastGrabbed = False
-                return
+            return
 
         grabbed, frame = self.camera.read()
 
@@ -59,7 +59,7 @@ class Runner:
             if self.lastGrabbed:
                 print("Failed to grab frame")
                 self.lastGrabbed = False
-                return
+            return
 
         self.lastGrabbed = True
 
