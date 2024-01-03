@@ -45,6 +45,7 @@ resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
 startupSleep = 0
+printFPS = True
 
 if getenv("DISPLAY") is None: # We're on the robot, do stuff for realsies
     videoTesting = False
@@ -143,8 +144,16 @@ def main():
 
         log_file.write("connected to table\n" if networkTablesConnected else "Failed to connect to table\n")
         stop = False
+
+        lastTime = time.monotonic()
+
         #Start main processing loop
         while not stop:
+
+            currentTime = time.monotonic()
+            if printFPS:
+                print(1.0 / (currentTime - lastTime), end = "\r")
+            lastTime = currentTime
             
             ###################
             # Process Web Cam #
