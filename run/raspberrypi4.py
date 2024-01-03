@@ -16,14 +16,14 @@ import ntcore
 
 #Team 4121 module imports
 from camera.single import FRCWebCam
-from vision.glob._2023 import *
+from vision.glob._2024 import *
 
 #Set up basic logging
 logging.basicConfig(level=logging.DEBUG)
 
 #Declare global variables
-cameraFile = 'config/2023/CameraSettings.txt'
-visionFile = 'config/2023/VisionSettings.txt'
+cameraFile = 'config/2024/CameraSettings.txt'
+visionFile = 'config/2024/VisionSettings.txt'
 cameraValues = {}
 
 #Define program control flags
@@ -48,147 +48,31 @@ def unwrap_or(val, default):
         return val
 
 visionTable = None
-done = 0
 fieldFrame = None
-tapeFrame = None
-def handle_field_objects(frame, cubes, cones):
+done = 0
+
+def handle_field_objects(frame, rings):
     global done, fieldFrame
-    if len(cubes) >= 1:
 
-        cube = cubes[0]
-        cv.rectangle(frame, (cube.x, cube.y), ((cube.x + cube.w), (cube.y + cube.h)), (0, 0, 255), 2)
-        cv.putText(frame, "D: {:6.2f}".format(cube.distance), (cube.x + 10, cube.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-        cv.putText(frame, "A: {:6.2f}".format(cube.angle), (cube.x + 10, cube.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-        cv.putText(frame, "O: {:6.2f}".format(cube.offset), (cube.x + 10, cube.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-
-        if len(cubes) >= 2:
-            cube = cubes[1]
-            cv.rectangle(frame, (cube.x, cube.y), ((cube.x + cube.w), (cube.y + cube.h)), (0, 255, 0), 2)
-            cv.putText(frame, "D: {:6.2f}".format(cube.distance), (cube.x + 10, cube.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "A: {:6.2f}".format(cube.angle), (cube.x + 10, cube.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "O: {:6.2f}".format(cube.offset), (cube.x + 10, cube.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-
-            if len(cubes) >= 3:
-                cube = cubes[2]
-                cv.rectangle(frame, (cube.x, cube.y), ((cube.x + cube.w), (cube.y + cube.h)), (0, 255, 0), 2)
-                cv.putText(frame, "D: {:6.2f}".format(cube.distance), (cube.x + 10, cube.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-                cv.putText(frame, "A: {:6.2f}".format(cube.angle), (cube.x + 10, cube.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-                cv.putText(frame, "O: {:6.2f}".format(cube.offset), (cube.x + 10, cube.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-        
-    if len(cones) >= 1:
-
-        cone = cones[0]
-        cv.rectangle(frame, (cone.x, cone.y), ((cone.x + cone.w), (cone.y + cone.h)), (0, 0, 255), 2)
-        cv.putText(frame, "D: {:6.2f}".format(cone.distance), (cone.x + 10, cone.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-        cv.putText(frame, "A: {:6.2f}".format(cone.angle), (cone.x + 10, cone.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-        cv.putText(frame, "O: {:6.2f}".format(cone.offset), (cone.x + 10, cone.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-
-        if len(cones) >= 2:
-            cone = cones[1]
-            cv.rectangle(frame, (cone.x, cone.y), ((cone.x + cone.w), (cone.y + cone.h)), (0, 255, 0), 2)
-            cv.putText(frame, "D: {:6.2f}".format(cone.distance), (cone.x + 10, cone.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "A: {:6.2f}".format(cone.angle), (cone.x + 10, cone.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "O: {:6.2f}".format(cone.offset), (cone.x + 10, cone.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-
-            if len(cones) >= 3:
-                cone = cones[2]
-                cv.rectangle(frame, (cone.x, cone.y), ((cone.x + cone.w), (cone.y + cone.h)), (0, 255, 0), 2)
-                cv.putText(frame, "D: {:6.2f}".format(cone.distance), (cone.x + 10, cone.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-                cv.putText(frame, "A: {:6.2f}".format(cone.angle), (cone.x + 10, cone.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-                cv.putText(frame, "O: {:6.2f}".format(cone.offset), (cone.x + 10, cone.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+    for ring in rings:
+        cv.rectangle(frame, (ring.x, ring.y), ((ring.x + ring.w), (ring.y + ring.h)), (0, 0, 255), 2)
+        cv.putText(frame, "D: {:6.2f}".format(ring.distance), (ring.x + 10, ring.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+        cv.putText(frame, "A: {:6.2f}".format(ring.angle), (ring.x + 10, ring.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+        cv.putText(frame, "O: {:6.2f}".format(ring.offset), (ring.x + 10, ring.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
     
     fieldFrame = frame
 
     if networkTablesConnected:
-        visionTable.putNumber("CubesFound", len(cubes))
-        if len(cubes) >= 1:
-            visionTable.putNumber("Cubes.0.distance", unwrap_or(cubes[0].distance, -9999.))
-            visionTable.putNumber("Cubes.0.angle", unwrap_or(cubes[0].angle, -9999.))
-            visionTable.putNumber("Cubes.0.offset", unwrap_or(cubes[0].offset, -9999.))
-            if len(cubes) >= 2:
-                visionTable.putNumber("Cubes.1.distance", unwrap_or(cubes[1].distance, -9999.))
-                visionTable.putNumber("Cubes.1.angle", unwrap_or(cubes[1].angle, -9999.))
-                visionTable.putNumber("Cubes.1.offset", unwrap_or(cubes[1].offset, -9999.))
-                if len(cubes) >= 3:
-                    visionTable.putNumber("Cubes.2.distance", unwrap_or(cubes[2].distance, -9999.))
-                    visionTable.putNumber("Cubes.2.angle", unwrap_or(cubes[2].angle, -9999.))
-                    visionTable.putNumber("Cubes.2.offset", unwrap_or(cubes[2].offset, -9999.))
-        
-        visionTable.putNumber("ConesFound", len(cones))
-        if len(cones) >= 1:
-            visionTable.putNumber("Cones.0.distance", unwrap_or(cones[0].distance, -9999.))
-            visionTable.putNumber("Cones.0.angle", unwrap_or(cones[0].angle, -9999.))
-            visionTable.putNumber("Cones.0.offset", unwrap_or(cones[0].offset, -9999.))
-            if len(cones) >= 2:
-                visionTable.putNumber("Cones.1.distance", unwrap_or(cones[1].distance, -9999.))
-                visionTable.putNumber("Cones.1.angle", unwrap_or(cones[1].angle, -9999.))
-                visionTable.putNumber("Cones.1.offset", unwrap_or(cones[1].offset, -9999.))
-                if len(cones) >= 3:
-                    visionTable.putNumber("Cones.2.distance", unwrap_or(cones[2].distance, -9999.))
-                    visionTable.putNumber("Cones.2.angle", unwrap_or(cones[2].angle, -9999.))
-                    visionTable.putNumber("Cones.2.offset", unwrap_or(cones[2].offset, -9999.))
+        visionTable.putNumber("RingsFound", len(rings))
+
+        for i in range(len(rings)):
+            visionTable.putNumber("Rings.0.distance", unwrap_or(rings[i].distance, -9999.))
+            visionTable.putNumber("Rings.0.angle", unwrap_or(rings[i].angle, -9999.))
+            visionTable.putNumber("Rings.0.offset", unwrap_or(rings[i].offset, -9999.))
     
     done += 1
 
-def handle_tapes(frame, tapes):
-    global done, tapeFrame
-    if len(tapes) >= 1:
-
-        tape = tapes[0]
-        cv.rectangle(frame, (tape.x, tape.y), ((tape.x + tape.w), (tape.y + tape.h)), (0, 0, 255), 2)
-        cv.putText(frame, "D: {:6.2f}".format(tape.distance), (tape.x + tape.w + 10, tape.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        cv.putText(frame, "A: {:6.2f}".format(tape.angle), (tape.x + tape.w + 10, tape.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        cv.putText(frame, "O: {:6.2f}".format(tape.offset), (tape.x + tape.w + 10, tape.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-        if len(tapes) >= 2:
-            tape = tapes[1]
-            cv.rectangle(frame, (tape.x, tape.y), ((tape.x + tape.w), (tape.y + tape.h)), (0, 255, 0), 2)
-            cv.putText(frame, "D: {:6.2f}".format(tape.distance), (tape.x + tape.w + 10, tape.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            cv.putText(frame, "A: {:6.2f}".format(tape.angle), (tape.x + tape.w + 10, tape.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            cv.putText(frame, "O: {:6.2f}".format(tape.offset), (tape.x + tape.w + 10, tape.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-            if len(tapes) >= 3:
-                tape = tapes[2]
-                cv.rectangle(frame, (tape.x, tape.y), ((tape.x + tape.w), (tape.y + tape.h)), (0, 255, 0), 2)
-                cv.putText(frame, "D: {:6.2f}".format(tape.distance), (tape.x + tape.w + 10, tape.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                cv.putText(frame, "A: {:6.2f}".format(tape.angle), (tape.x + tape.w + 10, tape.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                cv.putText(frame, "O: {:6.2f}".format(tape.offset), (tape.x + tape.w + 10, tape.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-                if len(tapes) >= 4:
-                    tape = tapes[3]
-                    cv.rectangle(frame, (tape.x, tape.y), ((tape.x + tape.w), (tape.y + tape.h)), (0, 255, 0), 2)
-                    cv.putText(frame, "D: {:6.2f}".format(tape.distance), (tape.x + tape.w + 10, tape.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                    cv.putText(frame, "A: {:6.2f}".format(tape.angle), (tape.x + tape.w + 10, tape.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                    cv.putText(frame, "O: {:6.2f}".format(tape.offset), (tape.x + tape.w + 10, tape.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-    
-    tapeFrame = frame
-    
-    if networkTablesConnected:
-        visionTable.putNumber("TapesFound", len(tapes))
-        if len(tapes) >= 1:
-            visionTable.putNumber("Tapes.0.distance", unwrap_or(tapes[0].distance, -9999.))
-            visionTable.putNumber("Tapes.0.angle", unwrap_or(tapes[0].angle, -9999.))
-            visionTable.putNumber("Tapes.0.offset", unwrap_or(tapes[0].offset, -9999.))
-            visionTable.putNumber("Tapes.0.y", unwrap_or(tapes[0].y, -9999.))
-            if len(tapes) >= 2:
-                visionTable.putNumber("Tapes.1.distance", unwrap_or(tapes[1].distance, -9999.))
-                visionTable.putNumber("Tapes.1.angle", unwrap_or(tapes[1].angle, -9999.))
-                visionTable.putNumber("Tapes.1.offset", unwrap_or(tapes[1].offset, -9999.))
-                visionTable.putNumber("Tapes.1.y", unwrap_or(tapes[1].y, -9999.))
-                if len(tapes) >= 3:
-                    visionTable.putNumber("Tapes.2.distance", unwrap_or(tapes[2].distance, -9999.))
-                    visionTable.putNumber("Tapes.2.angle", unwrap_or(tapes[2].angle, -9999.))
-                    visionTable.putNumber("Tapes.2.offset", unwrap_or(tapes[2].offset, -9999.))
-                    visionTable.putNumber("Tapes.2.y", unwrap_or(tapes[2].y, -9999.))
-                    if len(tapes) >= 4:
-                        visionTable.putNumber("Tapes.3.distance", unwrap_or(tapes[3].distance, -9999.))
-                        visionTable.putNumber("Tapes.3.angle", unwrap_or(tapes[3].angle, -9999.))
-                        visionTable.putNumber("Tapes.3.offset", unwrap_or(tapes[3].offset, -9999.))
-                        visionTable.putNumber("Tapes.3.y", unwrap_or(tapes[3].y, -9999.))
-
-    done += 1
-
-#Define main processing function
+# Define main processing function
 def main():
 
     global timeString, networkTablesConnected, visionTable, done
@@ -200,12 +84,9 @@ def main():
     visionTable = None
     FRCWebCam.read_config_file(cameraFile)
     fieldCam = FRCWebCam('FIELD', timeString, videofile="FIELD_" + timeString, csname="field")
-    tapeCam = FRCWebCam('TAPE', timeString, videofile="TAPE_" + timeString, csname="tapes")
     VisionBase.read_vision_file(visionFile)
 
-    cubeLib = CubeVisionLibrary()
-    coneLib = ConeVisionLibrary()
-    tapeLib = TapeRectVisionLibrary()
+    ringLib = RingVisionLibrary()
     
     
     #Open a log file
@@ -242,16 +123,14 @@ def main():
             ###################
             done = 0
 
-            fieldCam.use_libs_async(cubeLib, coneLib, callback=handle_field_objects, name="field")
-            tapeCam.use_libs_async(tapeLib, callback=handle_tapes, name="tapes")
+            fieldCam.use_libs_async(ringLib, callback=handle_field_objects)
             
-            while done < 2:
+            while done < 1:
                 time.sleep(0.005)
             
             if videoTesting:
                 
                 cv.imshow("Field", fieldFrame)
-                cv.imshow("Tapes", tapeFrame)
 
             #################################
             # Check for stopping conditions #

@@ -41,7 +41,7 @@ def main():
     camera = cv2.VideoCapture(int(sys.argv[1]) if len(sys.argv) > 1 else 0)
     camera.set(10, 100)
     camera.set(15, 0)
-    #camera.setResolution(160, 120)
+    #camera.setResolution(640, 480)
 
     setup_trackbars(range_filter)
 

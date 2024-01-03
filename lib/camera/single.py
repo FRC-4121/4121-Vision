@@ -340,6 +340,11 @@ class FRCWebCam:
     def _use_libs_update(self, callback, *libs):
         callback(*self.use_libs(*libs))
 
+    # Apply vision processors to a single frame, with a callback.
+    # Made to easily switch with `use_libs_async`
+    def use_libs_sync(self, *libs, callback = lambda _: None):
+        return callback(*self.use_libs(*libs))
+
     # Apply vision processors to a single frame, running in another thread
     def use_libs_async(self, *libs, callback = lambda _: None, name: str = "vision") -> Thread:
         thread = Thread(target=self._use_libs_update, args=(callback, *libs), name=name)

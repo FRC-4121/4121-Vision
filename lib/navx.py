@@ -59,6 +59,7 @@ class FRCNavx:
 
         # Set name of Navx thread
         self.name = name
+        
 
         # Initialize Navx values
         self.angle = 0.0
