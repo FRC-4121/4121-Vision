@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-#!/usr/bin/env python3
-
 #########################################################
 #                                                       #
 #             VMX Real Time Clock Utility               #
@@ -24,16 +21,14 @@ import os
 import time
 
 #Setup paths
-sys.path.append('/home/pi/.local/lib/python3.5/site-packages')
-sys.path.append('/home/pi/Team4121/Libraries')
-sys.path.append('/usr/local/lib/vmxpi/')
+sys.path.extend(['/usr/local/lib/vmxpi/', '../lib'])
 
 # Module imports
 from tkinter import *
 from tkinter import ttk
 
 #Team 4121 module imports
-from FRCNavxLibrary import FRCNavx
+from navx import FRCNavx
 
 
 # Define the main window

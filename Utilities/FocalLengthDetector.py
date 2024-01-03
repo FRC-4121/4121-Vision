@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #-----------------------------------------------------------------
 #
 # FRC Navx Library
@@ -17,11 +15,10 @@
 
 '''Focal length detector - Determines focal length of cameras'''
 
-#!/usr/bin/env python3
-
 #System imports
 import sys
 
 #Setup paths
-sys.path.append('/home/pi/.local/lib/python3.5/site-packages')
-sys.path.append('/home/pi/Team4121/Libraries')
+sys.path.append('../lib')
+
+# TODO: implement stuff
