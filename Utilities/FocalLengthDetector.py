@@ -15,10 +15,24 @@
 
 '''Focal length detector - Determines focal length of cameras'''
 
+#!/usr/bin/env python3
+
 #System imports
 import sys
+import os
+
+visionUser = os.environ.get("USER");
+if None == visionUser:
+    visionUser = "pi"
+
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
 
 #Setup paths
-sys.path.append('../lib')
+sys.path.append('/home/' + visionUser + '/.local/lib/python3.9/site-packages')
+sys.path.append('/home/' + visionUser + '/.local/lib/python3.7/site-packages')
+sys.path.append(team4121home + '/Motion')
+sys.path.append(team4121home + '/Vision')
 
 # TODO: implement stuff

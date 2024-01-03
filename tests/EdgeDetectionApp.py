@@ -19,8 +19,12 @@
 import sys
 import os
 
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
+
 # Setup paths for PI use
-sys.path.append('../lib')
+sys.path.append(team4121home + '/lib')
 
 # Module imports
 import cv2 as cv

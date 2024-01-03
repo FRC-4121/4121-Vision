@@ -13,6 +13,10 @@ import logging
 
 from cscore import CameraServer
 
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
+
 #Set general variables
 calibration_dir = '/home/pi/Programs/Python/Camera'
 working_dir = '/home/pi/Programs/Python/Camera/Calibration_Images'

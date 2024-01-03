@@ -1,12 +1,19 @@
+#!/usr/bin/env python3
+
 import sys
+import os
 import datetime
 import time
 import logging
 
 
-#Setup paths
-sys.path.extend(['/usr/local/lib/vmxpi', '../lib'])
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
 
+#Setup paths
+sys.path.append('/usr/local/lib/vmxpi/')
+sys.path.append(team4121home + '/lib')
 
 #Team 4121 module imports
 from navx import FRCNavx
@@ -43,7 +50,7 @@ def main():
     timeString = navx.get_raw_time()
     useNavx = not navx.poisoned
 
-    logFilename = 'logs/run/log_' + timeString + '.txt'
+    logFilename = team4121home + '/logs/run/log_' + timeString + '.txt'
     with open(logFilename, 'w') as log_file:
         log_file.write('run started on {}.\n'.format(datetime.datetime.now()))
         log_file.write('')

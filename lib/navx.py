@@ -14,8 +14,6 @@
 '''FRC Navx Library - Provides threaded methods and utilities for Navx board'''
 
 
-sys.path.append('/usr/local/lib/vmxpi/')
-
 import sys
 import importlib as imp
 from typing import *
@@ -23,6 +21,7 @@ import time
 import datetime
 import vmxpi_hal_python as vmxpi
 
+sys.path.append('/usr/local/lib/vmxpi/')
 
 # Class for interfacing with the NavX boards
 class FRCNavx:

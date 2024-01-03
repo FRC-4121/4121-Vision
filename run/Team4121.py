@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from platform import node as hostname
 import importlib as imp
 import sys
