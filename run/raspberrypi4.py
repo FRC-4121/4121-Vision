@@ -76,10 +76,10 @@ def handle_field_objects(frame: np.ndarray, rings: List[FoundObject], tags: List
             cv.putText(frame, "O: {:6.2f}".format(ring.offset), (ring.x + 10, ring.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
         for tag in tags:
             cv.rectangle(frame, (tag.x, tag.y), ((tag.x + tag.w), (tag.y + tag.h)), (255, 0, 255), 2)
-            cv.putText(frame, "D: {:6.2f}".format(tag.distance), (tag.x + 10, tag.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "A: {:6.2f}".format(tag.angle), (tag.x + 10, tag.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "O: {:6.2f}".format(tag.offset), (tag.x + 10, tag.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "I: {:6.2f}".format(tag.ident), (tag.x + 10, tag.y + 60), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+            cv.putText(frame, "D: {:6.2f}".format(tag.distance), (tag.x + 10, tag.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 2)
+            cv.putText(frame, "A: {:6.2f}".format(tag.angle), (tag.x + 10, tag.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 2)
+            cv.putText(frame, "O: {:6.2f}".format(tag.offset), (tag.x + 10, tag.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 2)
+            cv.putText(frame, "I: {}".format(tag.ident), (tag.x + 10, tag.y + 60), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 2)
             
     
     fieldFrame = frame

@@ -34,8 +34,8 @@ if None == team4121home:
 # Set general variables
 #calibration_dir = 'C:/Users/timfu/Documents/FRC General/Camera'
 #working_dir = 'C:/Users/timfu/Documents/FRC General/Camera/Calibration_Images'
-calibration_dir = '/home/pi/Programs/Python/Camera'
-working_dir = '/home/pi/Programs/Python/Camera/Calibration_Images'
+calibration_dir = team4121home + '/config'
+working_dir = '/home/pi/Calibration_Images'
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # Set image variables
@@ -122,7 +122,7 @@ def mainloop():
 
                     # Save the image for future processing
                     img_filename = working_dir + '/CalibrationImage_' + str(good_images) + '.jpg'
-                    cv.imwrite(img_filename, img)
+                    cv.imwrite(img_filename, frame)
                     print('Image saved as ' + img_filename)
 
                     # Draw chessboard on image and show

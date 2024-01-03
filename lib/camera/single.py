@@ -45,8 +45,17 @@ def load_cscore():
 #Set up basic logging
 logging.basicConfig(level=logging.DEBUG)
 
+
+team4121home = os.environ.get("TEAM4121HOME")
+if None == team4121home:
+    team4121home = os.getcwd()
+
+team4121config = os.environ.get("TEAM4121CONFIG")
+if None == team4121config:
+    team4121config = '2024'
+
 # Set global variables
-calibration_dir = "config"
+calibration_dir = team4121home + "config" + team4121config
 
 def find_cams(port: int):
     file = f"/sys/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.{port}/1-1.{port}:1.0/video4linux"
@@ -226,7 +235,7 @@ class FRCWebCam:
     def start_camera_thread(self):
 
         self.stopped = False
-        camThread = Thread(target=self._run_in_thread, name=self.name, args=())
+        camThread = KillableThread(target=self._run_in_thread, name=self.name, args=())
         camThread.daemon = True
         camThread.start()
 

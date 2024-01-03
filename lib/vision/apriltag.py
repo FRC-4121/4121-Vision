@@ -1,9 +1,7 @@
 from vision.base import *
 import pyapriltags
-from threads import get_tls
 
-def tls_detector() -> pyapriltags.Detector:
-    return get_tls("april_dt", lambda: pyapriltags.Detector(families="tag36h11"))
+detector = pyapriltags.Detector(families="tag36h11")
 
 def cvt_res(r: pyapriltags.Detection, cameraWidth: int, cameraHeight: int, cameraFOV: float) -> FoundObject:
     xs = sorted([c[0] for c in r.corners])
@@ -40,9 +38,7 @@ class AprilTagVisionLibrary(VisionBase):
     # Locates the cubes and cones in the game (2023)
     # returns a tuple containing (cubes, cones)
     def find_objects(self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int) -> List[FoundObject]:
-
-        # Initialize variables
         gray = cv.cvtColor(imgRaw, cv.COLOR_BGR2GRAY)
-        results = tls_detector().detect(gray)
+        results = detector.detect(gray)
 
         return [cvt_res(r, cameraWidth, cameraHeight, cameraFOV) for r in results]
