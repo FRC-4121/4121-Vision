@@ -45,7 +45,7 @@ class FRCNavx:
             timeString = str(currentTime.tm_year) + str(currentTime.tm_mon) + str(currentTime.tm_mday) + str(currentTime.tm_hour) + str(currentTime.tm_min)
 
             # Open a log file
-            logFilename = '../logs/navx/log_' + timeString + '.txt'
+            logFilename = 'logs/navx/log_' + timeString + '.txt'
             with open(logFilename, 'w') as log_file:
                 log_file.write('Navx initialized on %s.\n' % datetime.datetime.now())
                 log_file.write('')

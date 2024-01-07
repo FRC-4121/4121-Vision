@@ -43,7 +43,7 @@ def main():
     timeString = navx.get_raw_time()
     useNavx = not navx.poisoned
 
-    logFilename = '../logs/run/log_' + timeString + '.txt'
+    logFilename = 'logs/run/log_' + timeString + '.txt'
     with open(logFilename, 'w') as log_file:
         log_file.write('run started on {}.\n'.format(datetime.datetime.now()))
         log_file.write('')
@@ -115,4 +115,5 @@ def main():
         #Close the log file
         log_file.write('Run stopped on {}.'.format(datetime.datetime.now()))
 
-
+if __name__ == "__main__":
+    main()

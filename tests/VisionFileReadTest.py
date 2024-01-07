@@ -101,7 +101,7 @@ def read_vision_file(file):
 # Declare main routine
 def main():
 
-    read_vision_file('../Config/2022VisionSettings.txt')
+    read_vision_file('config/2022VisionSettings.txt')
 
 
 #define main function

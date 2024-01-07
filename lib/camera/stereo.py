@@ -23,7 +23,7 @@ from threading import Thread
 from typing import *
 
 # Set global variables
-calibration_dir = '../config'
+calibration_dir = 'config'
 #calibration_dir = 'C:/FRC-Test/Config/Calibration'
 
 

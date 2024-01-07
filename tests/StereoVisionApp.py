@@ -39,8 +39,8 @@ from vision.base import VisionLibrary
 from camera.stereo import FRCStereoCam
 
 # Declare global variables
-cameraFile = '../Config/2020CameraSettings.txt'
-visionFile = '../Config/2020VisionSettings.txt'
+cameraFile = 'config/2020CameraSettings.txt'
+visionFile = 'config/2020VisionSettings.txt'
 #cameraFile = 'C:/FRC-Test/Config/2020CameraSettings.txt'
 #visionFile = 'C:/FRC-Test/Config/2020VisionSettings.txt'
 cameraValues={}

@@ -23,9 +23,17 @@ from typing import *
 import cv2 as cv
 import numpy as np
 from threading import Thread
+import importlib as imp
 
 CvSource = None
 VideoMode = None
+
+cscore_available = False
+try:
+    loader = imp.find_loader("cscore")
+    cscore_available = loader is not None
+except ImportError:
+    cscore_available = False
 
 def load_cscore():
     global CvSource, VideoMode
@@ -38,7 +46,7 @@ def load_cscore():
 logging.basicConfig(level=logging.DEBUG)
 
 # Set global variables
-calibration_dir = "../config"
+calibration_dir = "config"
 
 def find_cams(port: int):
     file = f"/sys/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.{port}/1-1.{port}:1.0/video4linux"
@@ -53,8 +61,16 @@ def find_cams(port: int):
 class FRCWebCam:
     config = {"": {}}
     init = False
+    stream = cscore_available
+    save = True
+    
     # Define initialization
     def __init__(self, name: str, timestamp: str, videofile: Optional[str] = None, csname: Optional[str] = None):
+        if not FRCWebCam.stream:
+            csname = None
+        if not FRCWebCam.save:
+            videofile = None
+        
         self.name = name
         port = self.get_config("PORT", None)
         if port is not None:
@@ -66,7 +82,7 @@ class FRCWebCam:
             self.device_id = port
 
         #Open a log file
-        logFilename = "../logs/webcam/log_{}_{}.txt".format(self.name, timestamp)
+        logFilename = "logs/webcam/log_{}_{}.txt".format(self.name, timestamp)
         if videofile is None:
             videofile = "{}_{}".format(name, timestamp)
         self.log_file = open(logFilename, "w")
@@ -95,7 +111,7 @@ class FRCWebCam:
         self.camStream.set(cv.CAP_PROP_FPS, self.fps)
 
         # Set up video writer
-        self.videoFilename = "../videos/" + videofile + ".avi"
+        self.videoFilename = "videos/" + videofile + ".avi"
         fourcc = cv.VideoWriter_fourcc(*"MJPG")
         self.camWriter = cv.VideoWriter(self.videoFilename, fourcc, self.fps, (self.width, self.height))
 
@@ -207,7 +223,7 @@ class FRCWebCam:
 
 
     # Run camera updates in another thread
-    def start_camera_thread(self) -> FRCWebCam:
+    def start_camera_thread(self):
 
         self.stopped = False
         camThread = Thread(target=self._run_in_thread, name=self.name, args=())

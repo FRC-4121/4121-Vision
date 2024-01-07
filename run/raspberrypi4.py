@@ -22,8 +22,8 @@ from vision.glob._2023 import *
 logging.basicConfig(level=logging.DEBUG)
 
 #Declare global variables
-cameraFile = '../Config/2023/CameraSettings.txt'
-visionFile = '../Config/2023/VisionSettings.txt'
+cameraFile = 'config/2023/CameraSettings.txt'
+visionFile = 'config/2023/VisionSettings.txt'
 cameraValues = {}
 
 #Define program control flags
@@ -209,7 +209,7 @@ def main():
     
     
     #Open a log file
-    logFilename = '../logs/run/log_' + timeString + '.txt'
+    logFilename = 'logs/run/log_' + timeString + '.txt'
     with open(logFilename, 'w') as log_file:
         log_file.write('run started on {}.\n'.format(datetime.datetime.now()))
         log_file.write('')
@@ -275,3 +275,5 @@ def main():
         #Close the log file
         log_file.write('Run stopped on {}.'.format(datetime.datetime.now()))
 
+if __name__ == "__main__":
+    main()

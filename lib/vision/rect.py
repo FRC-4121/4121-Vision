@@ -67,8 +67,3 @@ class RectVisionLibrary(VisionBase):
                 ))
         
         return data
-
-CubeVisionLibrary = lambda: RectVisionLibrary("CUBE")
-ConeVisionLibrary = lambda: RectVisionLibrary("CONE")
-TapeVisionLibrary = lambda: RectVisionLibrary("TAPE")
-TapeRectVisionLibrary = TapeVisionLibrary
