@@ -1,8 +1,19 @@
+#!/usr/bin/env python3
+
 #System imports
 import sys
+import os
+
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
+
+team4121config = os.environ.get("TEAM4121CONFIG");
+if None == team4121config:
+    team4121config = '2023'
 
 #Setup paths
-sys.path.append('lib')
+sys.path.append(team4121home + '/lib')
 
 #sys.path.append('C:\\Users\\timfu\\Documents\\Team4121\\Libraries')
 
@@ -22,8 +33,8 @@ from vision.glob._2023 import *
 logging.basicConfig(level=logging.DEBUG)
 
 #Declare global variables
-cameraFile = 'config/2023/CameraSettings.txt'
-visionFile = 'config/2023/VisionSettings.txt'
+cameraFile = team4121home + '/config/' + team4121config + '/CameraSettings.txt'
+visionFile = team4121home + '/config/' + team4121config + '/VisionSettings.txt'
 cameraValues = {}
 
 #Define program control flags
@@ -209,7 +220,7 @@ def main():
     
     
     #Open a log file
-    logFilename = 'logs/run/log_' + timeString + '.txt'
+    logFilename = team4121home + '/logs/run/log_' + timeString + '.txt'
     with open(logFilename, 'w') as log_file:
         log_file.write('run started on {}.\n'.format(datetime.datetime.now()))
         log_file.write('')

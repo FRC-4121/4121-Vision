@@ -27,6 +27,10 @@ import datetime
 import time
 import logging
 
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
+
 # Set general variables
 #calibration_dir = 'C:/Users/timfu/Documents/FRC General/Camera'
 #working_dir = 'C:/Users/timfu/Documents/FRC General/Camera/Calibration_Images'

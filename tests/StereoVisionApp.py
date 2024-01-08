@@ -19,8 +19,16 @@
 import sys
 import os
 
+team4121config = os.environ.get("TEAM4121CONFIG");
+if None == team4121config:
+    team4121config = '2020'
+
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
+
 # Setup paths for PI use
-sys.path.append('../lib')
+sys.path.append(team4121home + '/lib')
 
 # Setup paths for Windows use
 #sys.path.append('C:/FRC-Test/Libraries')
@@ -39,8 +47,8 @@ from vision.base import VisionLibrary
 from camera.stereo import FRCStereoCam
 
 # Declare global variables
-cameraFile = 'config/2020CameraSettings.txt'
-visionFile = 'config/2020VisionSettings.txt'
+cameraFile = team4121home + '/config/' + team4121config + '/CameraSettings.txt'
+visionFile = team4121home + '/config/' + team4121config + '/VisionSettings.txt'
 #cameraFile = 'C:/FRC-Test/Config/2020CameraSettings.txt'
 #visionFile = 'C:/FRC-Test/Config/2020VisionSettings.txt'
 cameraValues={}

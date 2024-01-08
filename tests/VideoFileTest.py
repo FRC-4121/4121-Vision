@@ -23,8 +23,12 @@ import numpy as np
 import datetime
 import time
 
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
+
 #Setup paths
-sys.path.append('../lib')
+sys.path.append(team4121home + '/lib')
 
 #Team 4121 module imports
 from camera.single import FRCWebCam

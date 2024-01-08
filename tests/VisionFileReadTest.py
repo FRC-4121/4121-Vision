@@ -18,6 +18,14 @@
 # System imports
 import os
 
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
+
+team4121config = os.environ.get("TEAM4121CONFIG");
+if None == team4121config:
+    team4121config = '2022'
+
 # Module Imports
 import cv2 as cv
 import numpy as np 
@@ -101,7 +109,7 @@ def read_vision_file(file):
 # Declare main routine
 def main():
 
-    read_vision_file('config/2022VisionSettings.txt')
+    read_vision_file(team4121home + '/config/' + team4121config + '/VisionSettings.txt')
 
 
 #define main function

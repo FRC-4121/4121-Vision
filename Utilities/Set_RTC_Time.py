@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #########################################################
 #                                                       #
 #             VMX Real Time Clock Utility               #
@@ -20,8 +22,19 @@ import sys
 import os
 import time
 
+visionUser = os.environ.get("USER");
+if None == visionUser:
+    visionUser = "pi"
+
+team4121home = os.environ.get("TEAM4121HOME");
+if None == team4121home:
+    team4121home = os.getcwd()
+
 #Setup paths
-sys.path.extend(['/usr/local/lib/vmxpi/', '../lib'])
+sys.path.append('/usr/local/lib/vmxpi/')
+sys.path.append('/home/' + visionUser + '/.local/lib/python3.9/site-packages')
+sys.path.append('/home/' + visionUser + '/.local/lib/python3.7/site-packages')
+sys.path.append(team4121home + '/lib')
 
 # Module imports
 from tkinter import *
