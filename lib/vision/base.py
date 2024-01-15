@@ -178,6 +178,9 @@ class VisionBase:
         return list(contours)
 
 
+    def __str__(self):
+        return self.name
+
     # Define basic image processing method for edge detection
     def process_image_edges(self, imgRaw: np.ndarray):
 

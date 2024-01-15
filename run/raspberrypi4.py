@@ -45,7 +45,6 @@ resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
 startupSleep = 0
-printFPS = True
 
 if getenv("DISPLAY") is None: # We're on the robot, do stuff for realsies
     videoTesting = False
@@ -62,29 +61,35 @@ def unwrap_or(val, default):
         return val
 
 visionTable = None
-fieldFrame = None
+fieldFrame = np.zeros((480, 640, 3))
 done = 0
+lastFieldTime = time.monotonic()
+
 
 def handle_field_objects(frame: np.ndarray, rings: List[FoundObject], tags: List[FoundObject]):
-    global done, fieldFrame
-
+    global done, fieldFrame, lastFieldTime
+    fieldTime = time.monotonic()
+    fieldFps = 1 / (fieldTime - lastFieldTime)
+    lastFieldTime = fieldTime
     if videoTesting:
+        cv.putText(frame, "{:3.1f} FPS".format(fieldFps), (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         for ring in rings:
             cv.rectangle(frame, (ring.x, ring.y), ((ring.x + ring.w), (ring.y + ring.h)), (0, 0, 255), 2)
-            cv.putText(frame, "D: {:6.2f}".format(ring.distance), (ring.x + 10, ring.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "A: {:6.2f}".format(ring.angle), (ring.x + 10, ring.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
-            cv.putText(frame, "O: {:6.2f}".format(ring.offset), (ring.x + 10, ring.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 2)
+            cv.putText(frame, "D: {:6.2f}".format(ring.distance), (ring.x + 10, ring.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
+            cv.putText(frame, "A: {:6.2f}".format(ring.angle), (ring.x + 10, ring.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
+            cv.putText(frame, "O: {:6.2f}".format(ring.offset), (ring.x + 10, ring.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
         for tag in tags:
             cv.rectangle(frame, (tag.x, tag.y), ((tag.x + tag.w), (tag.y + tag.h)), (255, 0, 255), 2)
-            cv.putText(frame, "D: {:6.2f}".format(tag.distance), (tag.x + 10, tag.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 2)
-            cv.putText(frame, "A: {:6.2f}".format(tag.angle), (tag.x + 10, tag.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 2)
-            cv.putText(frame, "O: {:6.2f}".format(tag.offset), (tag.x + 10, tag.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 2)
-            cv.putText(frame, "I: {}".format(tag.ident), (tag.x + 10, tag.y + 60), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 2)
+            cv.putText(frame, "D: {:6.2f}".format(tag.distance), (tag.x + 10, tag.y + 15), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1)
+            cv.putText(frame, "A: {:6.2f}".format(tag.angle), (tag.x + 10, tag.y + 30), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1)
+            cv.putText(frame, "O: {:6.2f}".format(tag.offset), (tag.x + 10, tag.y + 45), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1)
+            cv.putText(frame, "I: {}".format(tag.ident), (tag.x + 10, tag.y + 60), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1)
             
     
     fieldFrame = frame
 
     if networkTablesConnected:
+        visionTable.putNumber("FieldFPS", fieldFps)
         visionTable.putNumber("RingsFound", len(rings))
 
         for i in range(len(rings)):
@@ -145,33 +150,10 @@ def main():
         log_file.write("connected to table\n" if networkTablesConnected else "Failed to connect to table\n")
         stop = False
 
-        lastTime = time.monotonic()
-
+        fieldThread = fieldCam.launch_libs_loop(ringLib, tagLib, callback=handle_field_objects)
+            
         #Start main processing loop
         while not stop:
-
-            currentTime = time.monotonic()
-            if printFPS:
-                print(1.0 / (currentTime - lastTime), end = "\r")
-            lastTime = currentTime
-            
-            ###################
-            # Process Web Cam #
-            ###################
-            done = 0
-
-            fieldThread = fieldCam.use_libs_async(ringLib, tagLib, callback=handle_field_objects)
-            
-            for i in range(200):
-                time.sleep(0.005)
-                if done == 1:
-                    break
-            else:
-                if fieldThread.is_alive():
-                    print("Field thread is alive for more than one second!")
-                    log_file.write("Field thread is alive for more than one second!\n")
-                    fieldThread.kill()
-            
             if videoTesting:
                 cv.imshow("Field", fieldFrame)
 
@@ -193,6 +175,7 @@ def main():
         #Close all open windows (for testing)
         if videoTesting:
             cv.destroyAllWindows()
+        fieldThread.kill()
 
         #Close the log file
         log_file.write('Run stopped on {}.'.format(datetime.datetime.now()))

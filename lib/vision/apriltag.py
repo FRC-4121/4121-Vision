@@ -33,6 +33,7 @@ class AprilTagVisionLibrary(VisionBase):
     # Define class initialization
     def __init__(self):
         super()
+        self.name = "APRIL"
     
 
     # Locates the cubes and cones in the game (2023)

@@ -24,6 +24,7 @@ import cv2 as cv
 import numpy as np
 import importlib as imp
 from threads import KillableThread
+import time
 
 CvSource = None
 VideoMode = None
@@ -74,12 +75,12 @@ class FRCWebCam:
     save = True
     
     # Define initialization
-    def __init__(self, name: str, timestamp: str, videofile: Optional[str] = None, csname: Optional[str] = None):
+    def __init__(self, name: str, timestamp: str, videofile: Optional[str] = None, csname: Optional[str] = None, profile: bool = False):
         if not FRCWebCam.stream:
             csname = None
         if not FRCWebCam.save:
             videofile = None
-        
+        self.profile = profile
         self.name = name
         port = self.get_config("PORT", None)
         if port is not None:
@@ -346,8 +347,34 @@ class FRCWebCam:
         frame = self.read_frame()
         return (frame, *[lib.find_objects(frame, self.width, self.height, self.fov) for lib in libs])
     
-    def _use_libs_update(self, callback, *libs):
+    def _use_libs_fn(self, callback, *libs):
         callback(*self.use_libs(*libs))
+
+    def _loop_libs_fn(self, callback, *libs):
+        while True:
+            callback(*self.use_libs(*libs))
+    
+    def _loop_libs_fn_profile(self, callback, *libs):
+        frame = None
+        def time_find(lib):
+            start = time.monotonic()
+            ret = lib.find_objects(frame, self.width, self.height, self.fov)
+            end = time.monotonic()
+            return str(end - start), ret
+        with open(f"{team4121home}/logs/{self.name}_profile.csv", "w+") as f:
+            f.write("total,cam,vision,callback,{}\n".format(",".join(map(str, libs))))
+            while True:
+                t0 = time.monotonic()
+                frame = self.read_frame()
+                t1 = time.monotonic()
+                times, objs = tuple(map(list, zip(*map(time_find, libs))))
+                args = (frame, *objs)
+                t2 = time.monotonic()
+                callback(*args)
+                t3 = time.monotonic()
+                f.write(",".join([str(t3 - t0), str(t1 - t0), str(t2 - t0), str(t3 - t2), *times]) + "\n")
+                f.flush()
+            
 
     # Apply vision processors to a single frame, with a callback.
     # Made to easily switch with `use_libs_async`
@@ -356,7 +383,13 @@ class FRCWebCam:
 
     # Apply vision processors to a single frame, running in another thread
     def use_libs_async(self, *libs, callback = lambda _: None, name: str = "vision") -> KillableThread:
-        thread = KillableThread(target=self._use_libs_update, args=(callback, *libs), name=name)
+        thread = KillableThread(target=self._use_libs_fn, args=(callback, *libs), name=name)
+        thread.daemon = True
+        thread.start()
+        return thread
+
+    def launch_libs_loop(self, *libs, callback = lambda _: None, name: str = "vision_loop") -> KillableThread:
+        thread = KillableThread(target=(self._loop_libs_fn_profile if self.profile else self._loop_libs_fn), args=(callback, *libs), name=name)
         thread.daemon = True
         thread.start()
         return thread

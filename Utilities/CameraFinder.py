@@ -16,7 +16,7 @@ for id in range(10):
         cs.set(cv.CAP_PROP_FPS, 15)
         cams.append((cs, "Camera {}".format(id)))
 
-for id in os.listdir("/dev/v4l/by-path"):
+for id in os.listdir("/dev/v4l/by-path") if os.path.exists("/dev/v4l/by-path") else []:
     cs = cv.VideoCapture(id)
     if cs.isOpened():
         print(id)
@@ -27,7 +27,7 @@ for id in os.listdir("/dev/v4l/by-path"):
         cs.set(cv.CAP_PROP_FPS, 15)
         cams.append((cs, id))
 
-for id in os.listdir("/dev/v4l/by-id"):
+for id in os.listdir("/dev/v4l/by-id") if os.path.exists("/dev/v4l/by-id") else []:
     cs = cv.VideoCapture(id)
     if cs.isOpened():
         print(id)
