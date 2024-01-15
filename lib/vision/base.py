@@ -27,7 +27,7 @@ class FoundObject:
     # initialize FoundObject, with unused fields defaulting to None
     # ty, x, and y are mandatory
     # all other parameters must be named
-    def __init__(self, ty, x: int, y: int, *, w: Optional[int] = None, h: Optional[int] = None, radius: Optional[int] = None, distance: Optional[int] = None, angle: Optional[float] = None, offset: Optional[int] = None, percent: Optional[int] = None, ident: Optional[int] = None):
+    def __init__(self, ty, x: int, y: int, *, w: Optional[int] = None, h: Optional[int] = None, radius: Optional[float] = None, distance: Optional[float] = None, angle: Optional[float] = None, offset: Optional[int] = None, percent: Optional[int] = None, ident: Optional[int] = None):
         self.ty = ty
         self.x = x
         self.y = y
