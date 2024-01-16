@@ -179,7 +179,7 @@ class VisionBase:
 
 
     def __str__(self):
-        return self.name
+        return getattr(self, "name", "<unnamed>")
 
     # Define basic image processing method for edge detection
     def process_image_edges(self, imgRaw: np.ndarray):

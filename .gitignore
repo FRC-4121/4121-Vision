@@ -3,5 +3,6 @@ logs/*/*.txt
 videos/*.avi
 .venv/**
 .vscode/**
+logs/*.csv
 .bash_history
 core

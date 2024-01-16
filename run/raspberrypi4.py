@@ -122,7 +122,8 @@ def main():
 
     ringLib = RingVisionLibrary()
     tagLib = AprilTagVisionLibrary()
-    
+    # ringLib = VisionBase()
+    # tagLib = VisionBase()
     
     #Open a log file
     logFilename = team4121home + '/logs/run/log_' + timeString + '.txt'
@@ -150,6 +151,7 @@ def main():
         log_file.write("connected to table\n" if networkTablesConnected else "Failed to connect to table\n")
         stop = False
 
+        fieldCam.profile = True
         fieldThread = fieldCam.launch_libs_loop(ringLib, tagLib, callback=handle_field_objects)
             
         #Start main processing loop

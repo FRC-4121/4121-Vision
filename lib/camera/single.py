@@ -372,7 +372,7 @@ class FRCWebCam:
                 t2 = time.monotonic()
                 callback(*args)
                 t3 = time.monotonic()
-                f.write(",".join([str(t3 - t0), str(t1 - t0), str(t2 - t0), str(t3 - t2), *times]) + "\n")
+                f.write(",".join([str(t3 - t0), str(t1 - t0), str(t2 - t1), str(t3 - t2), *times]) + "\n")
                 f.flush()
             
 
