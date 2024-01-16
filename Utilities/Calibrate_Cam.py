@@ -12,7 +12,6 @@
 #  @Version: 1.0                                              #
 #                                                             #
 ###############################################################
-
 """FRC webcam calibration utility"""
 
 # System imports
@@ -27,15 +26,15 @@ import datetime
 import time
 import logging
 
-team4121home = os.environ.get("TEAM4121HOME");
+team4121home = os.environ.get("TEAM4121HOME")
 if None == team4121home:
     team4121home = os.getcwd()
 
 # Set general variables
-#calibration_dir = 'C:/Users/timfu/Documents/FRC General/Camera'
-#working_dir = 'C:/Users/timfu/Documents/FRC General/Camera/Calibration_Images'
-calibration_dir = team4121home + '/config'
-working_dir = '/home/pi/Calibration_Images'
+# calibration_dir = 'C:/Users/timfu/Documents/FRC General/Camera'
+# working_dir = 'C:/Users/timfu/Documents/FRC General/Camera/Calibration_Images'
+calibration_dir = team4121home + "/config"
+working_dir = "/home/pi/Calibration_Images"
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # Set image variables
@@ -48,27 +47,26 @@ number_of_images = 0
 device_id = 0
 
 # Create calibration arrays
-objp = np.zeros((9*6,3), np.float32)
-objp[:,:2] = np.mgrid[0:9,0:6].T.reshape(-1,2)
+objp = np.zeros((9 * 6, 3), np.float32)
+objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
 objpoints = []
 imgpoints = []
 
 
 # Define main processing function
 def mainloop():
-
     # Clear image working directory
-    print('Clearing working directory...')
+    print("Clearing working directory...")
     for fname in os.listdir(working_dir):
-        os.remove(working_dir + '/' + fname)
+        os.remove(working_dir + "/" + fname)
 
     # Prompt for which camera
-    device_temp = int(input('Camera to calibrate (0, 1, 2 or 3): '))
+    device_temp = int(input("Camera to calibrate (0, 1, 2 or 3): "))
     if device_temp <= 3:
         device_id = device_temp
-                      
+
     # Prompt for number of images
-    number_of_images = int(input('Number of calibration images: '))
+    number_of_images = int(input("Number of calibration images: "))
 
     # Set up camera
     camera = cv.VideoCapture(device_id)
@@ -87,53 +85,52 @@ def mainloop():
 
     # Grab the required number of calibration images
     good_images = 0
-    while (good_images < number_of_images):
-
+    while good_images < number_of_images:
         # Loop until good image found
         returnflag = False
-        while (returnflag == False):
-
+        while returnflag == False:
             # Grab a frame of video
             (grabbed, frame) = camera.read()
 
             # Check that we have a frame before processing
             if grabbed == True:
-
                 # Convert image to grayscale
                 img_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
                 # Find the chessboard corners
-                returnflag, corners = cv.findChessboardCorners(img_gray, (9,6), None)
+                returnflag, corners = cv.findChessboardCorners(img_gray, (9, 6), None)
 
                 # Show image
                 if returnflag == True:
-
                     # Increase good image count
                     good_images += 1
-                
+
                     # Add object points to array
                     objpoints.append(objp)
 
                     # Sharpen corners
-                    corners2 = cv.cornerSubPix(img_gray,corners,(11,11),(-1,1),criteria)
+                    corners2 = cv.cornerSubPix(
+                        img_gray, corners, (11, 11), (-1, 1), criteria
+                    )
 
                     # Add image points to array
                     imgpoints.append(corners2)
 
                     # Save the image for future processing
-                    img_filename = working_dir + '/CalibrationImage_' + str(good_images) + '.jpg'
+                    img_filename = (
+                        working_dir + "/CalibrationImage_" + str(good_images) + ".jpg"
+                    )
                     cv.imwrite(img_filename, frame)
-                    print('Image saved as ' + img_filename)
+                    print("Image saved as " + img_filename)
 
                     # Draw chessboard on image and show
-                    img = cv.drawChessboardCorners(frame, (9,6), corners2, returnflag)
-                    cv.imshow('Camera Image',img)
+                    img = cv.drawChessboardCorners(frame, (9, 6), corners2, returnflag)
+                    cv.imshow("Camera Image", img)
                     cv.waitKey(2)
 
                 else:
-
                     # Show raw image
-                    cv.imshow('Camera Image',frame)
+                    cv.imshow("Camera Image", frame)
                     cv.waitKey(2)
 
             # Allow user to break out of loop
@@ -142,7 +139,7 @@ def mainloop():
                 break
 
         # Tell user to move chessboard image
-        print('Move chessboard for next image')
+        print("Move chessboard for next image")
         cv.waitKey(2000)
 
     # Close all open windows
@@ -152,15 +149,37 @@ def mainloop():
     camera.release()
 
     # Calculate camera calibration
-    print('Calculating camera calibration...')
-    ret, cam_matrix, dist_coeffs, rotate_vecs, translate_vecs = cv.calibrateCamera(objpoints, imgpoints, img_gray.shape[::-1], None, None)
+    print("Calculating camera calibration...")
+    ret, cam_matrix, dist_coeffs, rotate_vecs, translate_vecs = cv.calibrateCamera(
+        objpoints, imgpoints, img_gray.shape[::-1], None, None
+    )
 
     # Save camera matrix and distortion coefficients
-    print('Saving camera calibration to files...')
+    print("Saving camera calibration to files...")
     currentTime = time.localtime(time.time())
-    timeString = str(currentTime.tm_year) + str(currentTime.tm_mon) + str(currentTime.tm_mday) + str(currentTime.tm_hour) + str(currentTime.tm_min)
-    matrix_filename = calibration_dir + '/Camera_Matrix_Cam' + str(device_id) + '_' + timeString + '.txt'
-    coeff_filename = calibration_dir + '/Distortion_Coeffs_Cam' + str(device_id) + '_' + timeString + '.txt'
+    timeString = (
+        str(currentTime.tm_year)
+        + str(currentTime.tm_mon)
+        + str(currentTime.tm_mday)
+        + str(currentTime.tm_hour)
+        + str(currentTime.tm_min)
+    )
+    matrix_filename = (
+        calibration_dir
+        + "/Camera_Matrix_Cam"
+        + str(device_id)
+        + "_"
+        + timeString
+        + ".txt"
+    )
+    coeff_filename = (
+        calibration_dir
+        + "/Distortion_Coeffs_Cam"
+        + str(device_id)
+        + "_"
+        + timeString
+        + ".txt"
+    )
     np.savetxt(matrix_filename, cam_matrix)
     np.savetxt(coeff_filename, dist_coeffs)
 
@@ -177,11 +196,12 @@ def mainloop():
     #     if cv.waitKey(1) == 27:
     #         cv.destroyAllWindows()
     #         break
-          
+
 
 # Define main function
 def main():
     mainloop()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

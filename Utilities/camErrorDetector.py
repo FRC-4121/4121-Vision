@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#System imports
+# System imports
 import sys
 import os
 
@@ -10,8 +10,7 @@ if None == team4121home:
 
 team4121config = os.environ.get("TEAM4121CONFIG")
 if None == team4121config:
-    team4121config = '2024'
+    team4121config = "2024"
 
-#Setup paths
-sys.path.append(team4121home + '/lib')
-
+# Setup paths
+sys.path.append(team4121home + "/lib")

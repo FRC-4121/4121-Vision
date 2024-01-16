@@ -7,6 +7,7 @@ import os
 
 tls = threading.local()
 
+
 def get_tls(name: str, init):
     var = getattr(tls, name, None)
     if var is None:
@@ -14,22 +15,30 @@ def get_tls(name: str, init):
         setattr(tls, name, var)
     return var
 
+
 cams = [0, 2]
 params = (8.25, 8.25, 320, 240)
 tag_size = 0.16
 
 kill = False
 
+
 def find_cams(port: int):
     file = f"/sys/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.{port}/1-1.{port}:1.0/video4linux"
     if os.path.exists(file):
-        files = [int(x[5:]) for x in os.listdir(file) if x[:5] == "video" and x[5:].isnumeric()]
+        files = [
+            int(x[5:])
+            for x in os.listdir(file)
+            if x[:5] == "video" and x[5:].isnumeric()
+        ]
         files.sort()
         if len(files) > 0:
             return files[0]
 
+
 def tls_detector() -> pyapriltags.Detector:
     return get_tls("april_dt", lambda: pyapriltags.Detector(families="tag36h11"))
+
 
 class Runner:
     def __init__(self, port=None, *, id=None):
@@ -43,15 +52,14 @@ class Runner:
         self.lastGrabbed = True
         self.lastTime = time.monotonic()
         self.frame = np.zeros((480, 620, 3), dtype=np.uint8)
-        
-        
+
     def tick(self):
         if not self.camera.isOpened():
             if self.lastGrabbed:
                 print("Camera is not open")
                 self.lastGrabbed = False
             return
-        
+
         print(f"before read of {self.id}")
         grabbed, frame = self.camera.read()
         print(f"after read of {self.id}")
@@ -80,31 +88,62 @@ class Runner:
             cv2.line(frame, ptD, ptA, (0, 255, 0), 2)
 
             # draw the tag family on the image
-            cv2.putText(frame, str(r.tag_id), (ptA[0], ptA[1] - 15),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(
+                frame,
+                str(r.tag_id),
+                (ptA[0], ptA[1] - 15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                2,
+            )
 
-            cv2.putText(frame, "{: >4.2f} {: >4.2f} {: >4.2f}".format(*r.pose_t.flatten()), (ptB[0] + 15, ptB[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 255), 1)
-
+            cv2.putText(
+                frame,
+                "{: >4.2f} {: >4.2f} {: >4.2f}".format(*r.pose_t.flatten()),
+                (ptB[0] + 15, ptB[1]),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.3,
+                (255, 0, 255),
+                1,
+            )
 
         current = time.monotonic()
-        cv2.putText(frame, str(1 // (current - self.lastTime)) + " FPS", (0, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+        cv2.putText(
+            frame,
+            str(1 // (current - self.lastTime)) + " FPS",
+            (0, 15),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (0, 0, 0),
+            2,
+        )
         self.lastTime = current
 
         self.frame = frame
-    
+
     def launch(self):
         while not kill:
             self.tick()
 
     def show(self):
-        cv2.imshow("Camera " + str(self.port if self.port is not None else self.id), self.frame)
+        cv2.imshow(
+            "Camera " + str(self.port if self.port is not None else self.id), self.frame
+        )
+
 
 runners = [Runner(id=port) for port in cams]
+
 
 def run_multi():
     global kill
 
-    threads = [threading.Thread(target=Runner.launch, name="camera" + str(this.port), args=(this,)) for this in runners]
+    threads = [
+        threading.Thread(
+            target=Runner.launch, name="camera" + str(this.port), args=(this,)
+        )
+        for this in runners
+    ]
 
     for thread in threads:
         thread.start()
@@ -112,11 +151,12 @@ def run_multi():
     while True:
         for cam in runners:
             cam.show()
-        
+
         if kill or cv2.waitKey(10) == 27:
             cv2.destroyAllWindows()
             kill = True
             break
+
 
 def run_single():
     global kill
@@ -125,7 +165,7 @@ def run_single():
         for cam in runners:
             cam.tick()
             cam.show()
-        
+
         if kill or cv2.waitKey(10) == 27:
             cv2.destroyAllWindows()
             kill = True

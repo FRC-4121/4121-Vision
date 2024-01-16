@@ -12,26 +12,25 @@
 #  @Author: Team 4121                                              #
 #                                                                  #
 ####################################################################
-
 """Stereo camera test application"""
 
 # System imports
 import sys
 import os
 
-team4121config = os.environ.get("TEAM4121CONFIG");
+team4121config = os.environ.get("TEAM4121CONFIG")
 if None == team4121config:
-    team4121config = '2020'
+    team4121config = "2020"
 
-team4121home = os.environ.get("TEAM4121HOME");
+team4121home = os.environ.get("TEAM4121HOME")
 if None == team4121home:
     team4121home = os.getcwd()
 
 # Setup paths for PI use
-sys.path.append(team4121home + '/lib')
+sys.path.append(team4121home + "/lib")
 
 # Setup paths for Windows use
-#sys.path.append('C:/FRC-Test/Libraries')
+# sys.path.append('C:/FRC-Test/Libraries')
 
 # Module imports
 import cv2 as cv
@@ -40,130 +39,139 @@ import math
 import datetime
 import time
 import logging
-#from matplotlib import pyplot as plt
+
+# from matplotlib import pyplot as plt
 
 # Team 4121 module imports
 from vision.base import VisionLibrary
 from camera.stereo import FRCStereoCam
 
 # Declare global variables
-cameraFile = team4121home + '/config/' + team4121config + '/CameraSettings.txt'
-visionFile = team4121home + '/config/' + team4121config + '/VisionSettings.txt'
-#cameraFile = 'C:/FRC-Test/Config/2020CameraSettings.txt'
-#visionFile = 'C:/FRC-Test/Config/2020VisionSettings.txt'
-cameraValues={}
+cameraFile = team4121home + "/config/" + team4121config + "/CameraSettings.txt"
+visionFile = team4121home + "/config/" + team4121config + "/VisionSettings.txt"
+# cameraFile = 'C:/FRC-Test/Config/2020CameraSettings.txt'
+# visionFile = 'C:/FRC-Test/Config/2020VisionSettings.txt'
+cameraValues = {}
 
 
-#Read vision settings file
+# Read vision settings file
 def read_settings_file():
-
-    #Declare global variables
+    # Declare global variables
     global cameraFile
     global cameraValues
 
-    #Open the file and read contents
+    # Open the file and read contents
     try:
-            
-        #Open the file for reading
-        in_file = open(cameraFile, 'r')
-            
-        #Read in all lines
+        # Open the file for reading
+        in_file = open(cameraFile, "r")
+
+        # Read in all lines
         value_list = in_file.readlines()
-            
-        #Process list of lines
+
+        # Process list of lines
         for line in value_list:
-                
-            #Remove trailing newlines and whitespace
+            # Remove trailing newlines and whitespace
             clean_line = line.strip()
 
-            #Split the line into parts
-            split_line = clean_line.split(',')
+            # Split the line into parts
+            split_line = clean_line.split(",")
 
-            #Save the value into dictionary
+            # Save the value into dictionary
             cameraValues[split_line[0]] = split_line[1]
 
     except:
+        print("Using default camera values")
 
-        print('Using default camera values')
-
-        cameraValues['BallCamFOV'] = 27.3
-        cameraValues['BallCamWidth'] = 320
-        cameraValues['BallCamHeight'] = 240
-        cameraValues['BallCamFPS'] = 15
-        cameraValues['BallCamBrightness'] = 50
-        cameraValues['BallCamExposure'] = 50
-        cameraValues['BallCamCalFactor'] = 1
-        cameraValues['BallCamFocalLength'] = 333.29
-        cameraValues['GoalCamFOV'] = 27.3
-        cameraValues['GoalCamWidth'] = 320
-        cameraValues['GoalCamHeight'] = 240
-        cameraValues['GoalCamFPS'] = 15
-        cameraValues['GoalCamBrightness'] = 0
-        cameraValues['GoalCamExposure'] = 0
-        cameraValues['GoalCamCalFactor'] = 1
-        cameraValues['GoalCamFocalLength'] = 333.29
+        cameraValues["BallCamFOV"] = 27.3
+        cameraValues["BallCamWidth"] = 320
+        cameraValues["BallCamHeight"] = 240
+        cameraValues["BallCamFPS"] = 15
+        cameraValues["BallCamBrightness"] = 50
+        cameraValues["BallCamExposure"] = 50
+        cameraValues["BallCamCalFactor"] = 1
+        cameraValues["BallCamFocalLength"] = 333.29
+        cameraValues["GoalCamFOV"] = 27.3
+        cameraValues["GoalCamWidth"] = 320
+        cameraValues["GoalCamHeight"] = 240
+        cameraValues["GoalCamFPS"] = 15
+        cameraValues["GoalCamBrightness"] = 0
+        cameraValues["GoalCamExposure"] = 0
+        cameraValues["GoalCamCalFactor"] = 1
+        cameraValues["GoalCamFocalLength"] = 333.29
 
 
-#Define main processing function
+# Define main processing function
 def mainloop():
-
-    #Read camera settings file
+    # Read camera settings file
     read_settings_file()
 
-    #Create stereo camera stream
+    # Create stereo camera stream
     camSettings = {}
-    camSettings['Width'] = cameraValues['BallCamWidth']
-    camSettings['Height'] = cameraValues['BallCamHeight']
-    camSettings['Brightness'] = cameraValues['BallCamBrightness']
-    camSettings['Exposure'] = cameraValues['BallCamExposure']
-    camSettings['FPS'] = cameraValues['BallCamFPS']
+    camSettings["Width"] = cameraValues["BallCamWidth"]
+    camSettings["Height"] = cameraValues["BallCamHeight"]
+    camSettings["Brightness"] = cameraValues["BallCamBrightness"]
+    camSettings["Exposure"] = cameraValues["BallCamExposure"]
+    camSettings["FPS"] = cameraValues["BallCamFPS"]
     stereoCamera = FRCStereoCam(0, 1, "StereoCam", camSettings)
     stereoCamera.start_camera()
 
-    #Create blank images
-    leftImg = np.zeros(shape=(int(cameraValues['BallCamWidth']), int(cameraValues['BallCamHeight']), 3), dtype=np.uint8)
-    rightImg = np.zeros(shape=(int(cameraValues['BallCamWidth']), int(cameraValues['BallCamHeight']), 3), dtype=np.uint8)
+    # Create blank images
+    leftImg = np.zeros(
+        shape=(
+            int(cameraValues["BallCamWidth"]),
+            int(cameraValues["BallCamHeight"]),
+            3,
+        ),
+        dtype=np.uint8,
+    )
+    rightImg = np.zeros(
+        shape=(
+            int(cameraValues["BallCamWidth"]),
+            int(cameraValues["BallCamHeight"]),
+            3,
+        ),
+        dtype=np.uint8,
+    )
 
-    #Main processing loop
+    # Main processing loop
     while True:
-        
-        #Grab frames from stereo camera
+        # Grab frames from stereo camera
         leftImg, rightImg = stereoCamera.read_frame()
 
-        #Blur image to remove noise
-        leftImg_Blur = cv.GaussianBlur(leftImg.copy(),(5,5),0)
-        rightImg_Blur = cv.GaussianBlur(rightImg.copy(),(5,5),0)
+        # Blur image to remove noise
+        leftImg_Blur = cv.GaussianBlur(leftImg.copy(), (5, 5), 0)
+        rightImg_Blur = cv.GaussianBlur(rightImg.copy(), (5, 5), 0)
 
-        #Convert images to grayscale
+        # Convert images to grayscale
         leftImg_Gray = cv.cvtColor(leftImg_Blur, cv.COLOR_BGR2GRAY)
         rightImg_Gray = cv.cvtColor(rightImg_Blur, cv.COLOR_BGR2GRAY)
 
-        #Create depth map
+        # Create depth map
         stereo = cv.StereoBM.create(numDisparities=16, blockSize=15)
-        disparity = stereo.compute(leftImg_Gray,rightImg_Gray)
+        disparity = stereo.compute(leftImg_Gray, rightImg_Gray)
 
-        #Show images
-        cv.imshow('Camera 1', leftImg_Gray)
-        cv.imshow('Camera 2', rightImg_Gray)
-        
-        #Show depth map
-        #plt.imshow(disparity,'gray')
-        #plt.show()
+        # Show images
+        cv.imshow("Camera 1", leftImg_Gray)
+        cv.imshow("Camera 2", rightImg_Gray)
+
+        # Show depth map
+        # plt.imshow(disparity,'gray')
+        # plt.show()
 
         if cv.waitKey(1) == 27:
             break
 
-    #Close all open windows
+    # Close all open windows
     cv.destroyAllWindows()
 
-    #Release all cameras
+    # Release all cameras
     stereoCamera.release_cam()
 
 
-#Define main function
+# Define main function
 def main():
     mainloop()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
-    

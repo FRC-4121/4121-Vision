@@ -44,7 +44,6 @@ if len(cams) > 0:
             frame = np.zeros(shape=(640, 480, 3), dtype=np.uint8)
 
             try:
-
                 good, new_frame = cs.read()
 
                 if not good:
@@ -52,12 +51,15 @@ if len(cams) > 0:
                 frame = new_frame
 
             except Exception as read_error:
-
                 # Write error to log
-                print("Error reading video:\n    type: {}\n    args: {}\n    {}".format(type(read_error), read_error.args, read_error))
-            
+                print(
+                    "Error reading video:\n    type: {}\n    args: {}\n    {}".format(
+                        type(read_error), read_error.args, read_error
+                    )
+                )
+
             cv.imshow(name, frame)
-        
+
         if cv.waitKey(1) == 27:
             cv.destroyAllWindows()
             exit(0)

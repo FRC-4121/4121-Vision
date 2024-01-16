@@ -1,34 +1,31 @@
 from vision.base import *
 
+
 # Probably not to be used, doesn't comply with API
 class FourVisionTapeRectVisionLibrary(VisionBase):
-
     # Define class fields
     tape_values = {}
 
-
     # Define class initialization
     def __init__(self, cameraFocalLength, cameraMountHeight):
-        
         self.cameraFocalLength = cameraFocalLength
         self.cameraMountHeight = cameraMountHeight
 
     # Locates the cubes and cones in the game (2023)
     # returns a tuple containing (cubes, cones)
     def find_objects(self, imgRaw, imageWidth, imageHeight, cameraFOV):
-        
         # Read HSV values from dictionary and make tupples
-        hMin = int(VisionBase.config["TAPE"]['HMIN'])
-        hMax = int(VisionBase.config["TAPE"]['HMAX'])
-        sMin = int(VisionBase.config["TAPE"]['SMIN'])
-        sMax = int(VisionBase.config["TAPE"]['SMAX'])
-        vMin = int(VisionBase.config["TAPE"]['VMIN'])
-        vMax = int(VisionBase.config["TAPE"]['VMAX'])
+        hMin = int(VisionBase.config["TAPE"]["HMIN"])
+        hMax = int(VisionBase.config["TAPE"]["HMAX"])
+        sMin = int(VisionBase.config["TAPE"]["SMIN"])
+        sMax = int(VisionBase.config["TAPE"]["SMAX"])
+        vMin = int(VisionBase.config["TAPE"]["VMIN"])
+        vMax = int(VisionBase.config["TAPE"]["VMAX"])
         tapeHSVMin = (hMin, sMin, vMin)
         tapeHSVMax = (hMax, sMax, vMax)
 
         # Initialize processing values
-        targetX = 1000 
+        targetX = 1000
         targetY = 1000
         targetW = 1000
         targetH = 1000
@@ -52,32 +49,31 @@ class FourVisionTapeRectVisionLibrary(VisionBase):
         rect = None
         box = None
 
-
         # Initialize flags
         foundTape = False
         targetLock = False
-        
+
         # Find alignment tape in image
-        tapeContours = self.process_image_contours(imgRaw, tapeHSVMin, tapeHSVMax, False, False)
+        tapeContours = self.process_image_contours(
+            imgRaw, tapeHSVMin, tapeHSVMax, False, False
+        )
 
         # Continue with processing if alignment tape found
-        if len(tapeContours) >= 3: #AT LEAST three
-            
-            #Process each contour
+        if len(tapeContours) >= 3:  # AT LEAST three
+            # Process each contour
             firstContour = True
             minOffset = 0
             for contour in tapeContours:
-              
                 # Find horizontal rectangle
-                rectX, rectY, rectW, rectH = cv.boundingRect(contour) 
+                rectX, rectY, rectW, rectH = cv.boundingRect(contour)
 
-                if (rectW * rectH) > int(VisionBase.config["TAPE"]['MINAREA']):
-                    
+                if (rectW * rectH) > int(VisionBase.config["TAPE"]["MINAREA"]):
                     # Find offset of rectangle from center of image
-                    rectOffset = abs((rectX + rectW/2) - imageWidth / 2) #from parameter
+                    rectOffset = abs(
+                        (rectX + rectW / 2) - imageWidth / 2
+                    )  # from parameter
 
                     if firstContour == True:
-
                         minOffset = rectOffset
                         firstContour = False
                         targetX = rectX
@@ -86,9 +82,7 @@ class FourVisionTapeRectVisionLibrary(VisionBase):
                         targetH = rectH
 
                     else:
-
                         if rectOffset < minOffset:
-
                             minOffset = rectOffset
                             targetX = rectX
                             targetY = rectY
@@ -112,57 +106,79 @@ class FourVisionTapeRectVisionLibrary(VisionBase):
                     # botAngle = 2 * cameraAngle
 
                     # Set flag
-                    foundTape = True 
-            
+                    foundTape = True
+
             # Calculate real world values of found tape
             if foundTape:
-                                
                 # Calculate inches per pixel conversion factor
-                inchesPerPixel = float(VisionBase.config["TAPE"]['TAPEWIDTH']) / targetW
+                inchesPerPixel = float(VisionBase.config["TAPE"]["TAPEWIDTH"]) / targetW
 
                 # Find tape offsets
-                horizOffsetPixels = (targetX + targetW/2) - imageWidth / 2 #from parameter
+                horizOffsetPixels = (
+                    targetX + targetW / 2
+                ) - imageWidth / 2  # from parameter
                 horizOffsetInInches = inchesPerPixel * horizOffsetPixels
-                vertOffsetPixels = (imageHeight / 2) - (targetY - targetH/2)
+                vertOffsetPixels = (imageHeight / 2) - (targetY - targetH / 2)
                 vertOffsetInInches = inchesPerPixel * vertOffsetPixels
                 centerOffset = -horizOffsetInInches
-                
+
                 # Calculate distance to tape
-                straightLineDistance = float(VisionBase.config["TAPE"]['TAPEWIDTH']) * self.cameraFocalLength / targetW
-                distanceArg = math.pow(straightLineDistance, 2) - math.pow((float(VisionBase.config["TAPE"]['GOALHEIGHT']) - self.cameraMountHeight),2)
-                if (distanceArg > 0):
+                straightLineDistance = (
+                    float(VisionBase.config["TAPE"]["TAPEWIDTH"])
+                    * self.cameraFocalLength
+                    / targetW
+                )
+                distanceArg = math.pow(straightLineDistance, 2) - math.pow(
+                    (
+                        float(VisionBase.config["TAPE"]["GOALHEIGHT"])
+                        - self.cameraMountHeight
+                    ),
+                    2,
+                )
+                if distanceArg > 0:
                     distanceToTape = math.sqrt(distanceArg)
                 else:
                     distanceToTape = straightLineDistance
-                distanceToWall = distanceToTape                
+                distanceToWall = distanceToTape
 
                 # Find tape offsets
-                horizAngleToTape = math.degrees(math.atan((horizOffsetInInches / distanceToTape)))
-                vertAngleToTape = math.degrees(math.atan((vertOffsetInInches / distanceToTape)))
+                horizAngleToTape = math.degrees(
+                    math.atan((horizOffsetInInches / distanceToTape))
+                )
+                vertAngleToTape = math.degrees(
+                    math.atan((vertOffsetInInches / distanceToTape))
+                )
 
                 # Determine if we have target lock
-                if abs(horizOffsetInInches) <= float(VisionBase.config["TAPE"]['LOCKTOLERANCE']):
+                if abs(horizOffsetInInches) <= float(
+                    VisionBase.config["TAPE"]["LOCKTOLERANCE"]
+                ):
                     targetLock = True
 
-
-        return ({
-            'TargetX': targetX,
-            'TargetY': targetY,
-            'TargetW': targetW,
-            'TargetH': targetH,
-            'IPP': inchesPerPixel,
-            'Offset': horizOffsetPixels
-        },
-        {
-            'AspectRatio': aspectRatio,
-            'CenterOffset': centerOffset,
-            'StraightDistance': straightLineDistance,
-            'TapeDistance': distanceToTape,
-            'WallDistance': distanceToWall,
-            'HAngle': horizAngleToTape,
-            'VAngle': vertAngleToTape,
-            'TargetRotation': cameraAngle,
-            'BotAngle': botAngle,
-            'ApparentWidth': apparentTapeWidth,
-            'VertOffset': vertOffsetInInches
-        }, foundTape, targetLock, rect, box)
+        return (
+            {
+                "TargetX": targetX,
+                "TargetY": targetY,
+                "TargetW": targetW,
+                "TargetH": targetH,
+                "IPP": inchesPerPixel,
+                "Offset": horizOffsetPixels,
+            },
+            {
+                "AspectRatio": aspectRatio,
+                "CenterOffset": centerOffset,
+                "StraightDistance": straightLineDistance,
+                "TapeDistance": distanceToTape,
+                "WallDistance": distanceToWall,
+                "HAngle": horizAngleToTape,
+                "VAngle": vertAngleToTape,
+                "TargetRotation": cameraAngle,
+                "BotAngle": botAngle,
+                "ApparentWidth": apparentTapeWidth,
+                "VertOffset": vertOffsetInInches,
+            },
+            foundTape,
+            targetLock,
+            rect,
+            box,
+        )

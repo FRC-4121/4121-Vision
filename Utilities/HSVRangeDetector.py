@@ -37,13 +37,12 @@ def get_trackbar_values(range_filter):
 
 
 def main():
-
     range_filter = "HSV"
 
     camera = cv2.VideoCapture(int(sys.argv[1]) if len(sys.argv) > 1 else 0)
     camera.set(10, 100)
     camera.set(15, 0)
-    #camera.setResolution(640, 480)
+    # camera.setResolution(640, 480)
 
     setup_trackbars(range_filter)
 
@@ -55,9 +54,13 @@ def main():
 
         frame_to_thresh = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        v1_min, v2_min, v3_min, v1_max, v2_max, v3_max = get_trackbar_values(range_filter)
+        v1_min, v2_min, v3_min, v1_max, v2_max, v3_max = get_trackbar_values(
+            range_filter
+        )
 
-        thresh = cv2.inRange(frame_to_thresh, (v1_min, v2_min, v3_min), (v1_max, v2_max, v3_max))
+        thresh = cv2.inRange(
+            frame_to_thresh, (v1_min, v2_min, v3_min), (v1_max, v2_max, v3_max)
+        )
 
         cv2.imshow("Original", image)
         cv2.imshow("Thresh", thresh)
@@ -70,5 +73,5 @@ def main():
     cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
