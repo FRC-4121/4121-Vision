@@ -12,6 +12,10 @@ team4121config = os.environ.get("TEAM4121CONFIG")
 if None == team4121config:
     team4121config = "2024"
 
+nt_server_addr = os.environ.get("NT_SERVER_ADDR")
+if None == nt_server_addr:
+    nt_server_addr = "10.41.21.2"
+
 # Setup paths
 sys.path.append(team4121home + "/lib")
 
@@ -40,7 +44,7 @@ visionFile = team4121home + "/config/" + team4121config + "/VisionSettings.txt"
 cameraValues = {}
 
 # Define program control flags
-videoTesting = False
+videoTesting = True
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
@@ -61,7 +65,6 @@ timeString = "{}-{}-{}_{}:{}:{}".format(
 )
 
 nt = ntcore.NetworkTableInstance.getDefault()
-networkTablesConnected = nt.isConnected()
 
 def unwrap_or(val, default):
     if val is None:
@@ -211,7 +214,6 @@ def main():
     time.sleep(startupSleep)
 
     # Define objects
-    visionTable = None
     FRCWebCam.read_config_file(cameraFile)
     fieldCam = FRCWebCam(
         "FIELD", timeString, videofile="FIELD_" + timeString, csname="field"
@@ -232,15 +234,17 @@ def main():
         # Connect NetworkTables
         try:
             if networkTablesConnected:
+                nt.setServer(nt_server_addr)
                 nt.startClient3("pi4")
-                nt.setServer("10.41.21.2")
                 visionTable = nt.getTable("vision")
-                networkTablesConnected = visionTable.isConnected()
-                log_file.write("Connected to Networktables on 10.41.21.2 \n")
+                
+                log_file.write("Connected to Networktables on {} \n".format(nt_server_addr))
 
                 visionTable.putNumber("RobotStop", 0)
 
                 timeString = visionTable.getString("Time", timeString)
+                
+                # networkTablesConnected = nt.isConnected()
         except Exception as e:
             log_file.write("Error:  Unable to connect to Network tables.\n")
             log_file.write("Error message: {}\n".format(e))
