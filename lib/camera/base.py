@@ -55,12 +55,16 @@ if None == team4121config:
 calibration_dir = team4121home + "config" + team4121config
 
 
-# Define the web camera class
+# This is the base camera, from which all of our cameras inherit
+# The default initializer should probably be called before the rest of the initializer in derived classes
+# In addition, the `init_cam` static method can delegate to a derived class by reading the "TYPE" field in the config
+# The derived camera's module must first be loaded
 class CameraBase:
     config = {"": {}}
     init = False
     stream = cscore_available
     save = True
+    types = {}
 
     # Define initialization
     def __init__(
@@ -105,16 +109,15 @@ class CameraBase:
         try:
             self.camWriter.open(
                 self.videoFilename,
-                self.fourcc,
-                float(self.get_config("FPS", 15)),
+                fourcc,
+                float(self.fps),
                 (self.width, self.height),
                 True,
             )
         except Exception as e:
             self.log_file.write(
-                "Error opening video writer for {}\n".format(self.videoFilename)
+                "Error opening video writer for {}\n{}\n".format(self.videoFilename, e)
             )
-            self.log_file.write(str(e))
 
         if self.camWriter.isOpened():
             self.log_file.write("Video writer is open\n")
@@ -122,7 +125,7 @@ class CameraBase:
             self.log_file.write("Video writer is NOT open\n")
 
         # Initialize blank frames
-        self.frame = np.zeros(shape=(self.width, self.height, 3), dtype=np.uint8)
+        self.frame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
 
         self.grabbed = True
 
@@ -133,19 +136,19 @@ class CameraBase:
         self.stopped = False
 
         # Read camera calibration files
-        cam_matrix_file = (
-            calibration_dir + "/Camera_Matrix_Cam" + str(self.device_id) + ".txt"
-        )
-        cam_coeffs_file = (
-            calibration_dir + "/Distortion_Coeffs_Cam" + str(self.device_id) + ".txt"
-        )
-        if (
-            os.path.isfile(cam_matrix_file) == True
-            and os.path.isfile(cam_coeffs_file) == True
-        ):
-            self.cam_matrix = np.loadtxt(cam_matrix_file)
-            self.distort_coeffs = np.loadtxt(cam_coeffs_file)
-            self.undistort_img = True
+        # cam_matrix_file = (
+        #     calibration_dir + "/Camera_Matrix_Cam" + str(self.device_id) + ".txt"
+        # )
+        # cam_coeffs_file = (
+        #     calibration_dir + "/Distortion_Coeffs_Cam" + str(self.device_id) + ".txt"
+        # )
+        # if (
+        #    os.path.isfile(cam_matrix_file) == True
+        #    and os.path.isfile(cam_coeffs_file) == True
+        # ):
+        #    self.cam_matrix = np.loadtxt(cam_matrix_file)
+        #    self.distort_coeffs = np.loadtxt(cam_coeffs_file)
+        #    self.undistort_img = True
 
         if csname is not None:
             load_cscore()
@@ -208,6 +211,29 @@ class CameraBase:
             return False
 
         return True
+    
+    @staticmethod
+    def init_cam(
+        name: str,
+        timestamp: str,
+        videofile: Optional[str] = None,
+        csname: Optional[str] = None,
+        profile: bool = False,
+    ):
+        ty = None
+        
+        if name in CameraBase.config:
+            cfg = CameraBase.config[name]
+            if "TYPE" in cfg:
+                ty = CameraBase.types[cfg["TYPE"]]
+        if ty is not None:
+            cfg = CameraBase.config[""]
+            if "TYPE" in cfg:
+                ty = CameraBase.types[cfg["TYPE"]]
+        if ty is None:
+            raise KeyError("camera type not specified!")
+        
+        return ty(name, timestamp, videofile, csname, profile)
 
     # Override point for camera
     def read_frame_raw(self) -> (bool, np.ndarray):
@@ -251,11 +277,11 @@ class CameraBase:
     # Grab a frame from the camera, possibly with some preprocessing
     def read_frame(self) -> np.ndarray:
         # Declare frame for undistorted image
-        newFrame = np.zeros(shape=(self.width, self.height, 3), dtype=np.uint8)
+        newFrame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
 
         try:
             # Grab new frame
-            self.grabbed, frame = self.camStream.read()
+            self.grabbed, frame = self.read_frame_raw()
 
             if not self.grabbed:
                 return newFrame

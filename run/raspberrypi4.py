@@ -32,7 +32,9 @@ from typing import *
 import numpy as np
 
 # Team 4121 module imports
-from camera.usb import UsbCamera as FRCWebCam
+import camera.picam
+import camera.usb
+from camera.base import CameraBase
 from vision.glob._2024 import *
 
 # Set up basic logging
@@ -214,9 +216,9 @@ def main():
     time.sleep(startupSleep)
 
     # Define objects
-    FRCWebCam.read_config_file(cameraFile)
-    fieldCam = FRCWebCam(
-        "FIELD", timeString, videofile="FIELD_" + timeString, csname="field"
+    CameraBase.read_config_file(cameraFile)
+    fieldCam = CameraBase.init_cam(
+        "USB2", timeString, videofile="FIELD_" + timeString, csname="field"
     )
     VisionBase.read_vision_file(visionFile)
 

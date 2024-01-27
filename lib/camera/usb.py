@@ -51,6 +51,8 @@ class UsbCamera(CameraBase):
 
     def read_frame_raw(self) -> (bool, np.ndarray):
         good, frame = self.camStream.read()
-        if not frame:
+        if not good:
             frame = np.zeros((self.width, self.height, 3))
         return good, frame
+
+CameraBase.types["USB"] = UsbCamera

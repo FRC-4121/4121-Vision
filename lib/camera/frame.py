@@ -9,6 +9,7 @@ class SingleFrame(CameraBase):
         self,
         name: str,
         timestamp: str,
+        *,
         frame: Optional[np.ndarray] = None
     ):
         super().__init__(name, timestamp)
