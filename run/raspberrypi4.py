@@ -40,10 +40,11 @@ visionFile = team4121home + "/config/" + team4121config + "/VisionSettings.txt"
 cameraValues = {}
 
 # Define program control flags
-videoTesting = True
+videoTesting = False
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
+syncCamera = False
 startupSleep = 0
 
 if getenv("DISPLAY") is None:  # We're on the robot, do stuff for realsies
@@ -60,7 +61,7 @@ timeString = "{}-{}-{}_{}:{}:{}".format(
 )
 
 nt = ntcore.NetworkTableInstance.getDefault()
-
+networkTablesConnected = nt.isConnected()
 
 def unwrap_or(val, default):
     if val is None:
@@ -71,14 +72,15 @@ def unwrap_or(val, default):
 
 visionTable = None
 fieldFrame = np.zeros((480, 640, 3))
+fieldFrames = 0
 done = 0
 lastFieldTime = time.monotonic()
-
+stop = False
 
 def handle_field_objects(
     frame: np.ndarray, rings: List[FoundObject], tags: List[FoundObject]
 ):
-    global done, fieldFrame, lastFieldTime
+    global done, fieldFrame, lastFieldTime, fieldFrames
     fieldTime = time.monotonic()
     fieldFps = 1 / (fieldTime - lastFieldTime)
     lastFieldTime = fieldTime
@@ -173,7 +175,6 @@ def handle_field_objects(
             )
 
     fieldFrame = frame
-
     if networkTablesConnected:
         visionTable.putNumber("FieldFPS", fieldFps)
         visionTable.putNumber("RingsFound", len(rings))
@@ -201,7 +202,7 @@ def handle_field_objects(
             visionTable.putNumber(f"Tags.{i}.id", unwrap_or(tags[i].ident, -9999.0))
 
     done += 1
-
+    fieldFrames += 1
 
 # Define main processing function
 def main():
@@ -234,29 +235,29 @@ def main():
                 nt.startClient3("pi4")
                 nt.setServer("10.41.21.2")
                 visionTable = nt.getTable("vision")
-                networkTablesConnected = True
+                networkTablesConnected = visionTable.isConnected()
                 log_file.write("Connected to Networktables on 10.41.21.2 \n")
 
                 visionTable.putNumber("RobotStop", 0)
 
                 timeString = visionTable.getString("Time", timeString)
-        except:
+        except Exception as e:
             log_file.write("Error:  Unable to connect to Network tables.\n")
-            log_file.write("Error message: ", sys.exc_info()[0])
-            log_file.write("\n")
+            log_file.write("Error message: {}\n".format(e))
 
         log_file.write(
             "connected to table\n"
             if networkTablesConnected
             else "Failed to connect to table\n"
         )
-        stop = False
-
-        fieldCam.profile = True
-        fieldThread = fieldCam.launch_libs_loop(
-            ringLib, tagLib, callback=handle_field_objects
-        )
-
+        
+        fieldThread = None
+        if not syncCamera:
+            fieldCam.profile = False
+            fieldThread = fieldCam.launch_libs_loop(
+                ringLib, tagLib, callback=handle_field_objects
+            )
+        start = time.monotonic()
         # Start main processing loop
         while not stop:
             if videoTesting:
@@ -267,7 +268,7 @@ def main():
             #################################
 
             # Check for stop code from keyboard (for testing)
-            if cv.waitKey(1) == 27:
+            if videoTesting and cv.waitKey(1) == 27:
                 break
 
             # Check for stop code from network tables
@@ -276,14 +277,31 @@ def main():
                 if robotStop == 1 or not networkTablesConnected:
                     break
 
+            if syncCamera:
+                fieldCam.use_libs_sync(ringLib, tagLib, callback=handle_field_objects)
+
+            if not (syncCamera or videoTesting or networkTablesConnected):
+                time.sleep(0.0001)
+        end = time.monotonic()
+        
+        log_file.write("Average field FPS: {}\n".format(fieldFrames / (end - start)))
+
         # Close all open windows (for testing)
         if videoTesting:
             cv.destroyAllWindows()
-        fieldThread.kill()
+        
+        if fieldThread is not None:
+            fieldThread.kill()
 
         # Close the log file
         log_file.write("Run stopped on {}.".format(datetime.datetime.now()))
 
 
 if __name__ == "__main__":
+    def stopit(*args):
+        global stop
+        stop = True
+    import signal
+    signal.signal(signal.SIGUSR1, stopit)
+    signal.signal(signal.SIGINT, stopit)
     main()

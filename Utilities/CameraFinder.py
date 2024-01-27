@@ -3,6 +3,7 @@
 import cv2 as cv
 import numpy as np
 import os
+import time
 
 cams = []
 for id in range(10):
@@ -38,6 +39,8 @@ for id in os.listdir("/dev/v4l/by-id") if os.path.exists("/dev/v4l/by-id") else 
         cs.set(cv.CAP_PROP_FPS, 15)
         cams.append((cs, id))
 
+last = time.monotonic()
+
 if len(cams) > 0:
     while True:
         for cs, name in cams:
@@ -45,9 +48,8 @@ if len(cams) > 0:
 
             try:
                 good, new_frame = cs.read()
-
                 if not good:
-                    break
+                    continue
                 frame = new_frame
 
             except Exception as read_error:
@@ -59,6 +61,10 @@ if len(cams) > 0:
                 )
 
             cv.imshow(name, frame)
+            
+        current = time.monotonic()
+        print(1 / (current - last), end="\r")
+        last = current
 
         if cv.waitKey(1) == 27:
             cv.destroyAllWindows()
