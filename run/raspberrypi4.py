@@ -44,7 +44,7 @@ visionFile = team4121home + "/config/" + team4121config + "/VisionSettings.txt"
 cameraValues = {}
 
 # Define program control flags
-videoTesting = True
+videoTesting = False
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
@@ -178,7 +178,7 @@ def handle_field_objects(
             )
 
     fieldFrame = frame
-    if networkTablesConnected:
+    if nt.isConnected():
         visionTable.putNumber("FieldFPS", fieldFps)
         visionTable.putNumber("RingsFound", len(rings))
 
@@ -251,7 +251,7 @@ def main():
 
         log_file.write(
             "connected to table\n"
-            if networkTablesConnected
+            if nt.isConnected()
             else "Failed to connect to table\n"
         )
         
@@ -276,7 +276,7 @@ def main():
                 break
 
             # Check for stop code from network tables
-            if networkTablesConnected:
+            if nt.isConnected():
                 robotStop = visionTable.getNumber("RobotStop", 0)
                 if robotStop == 1 or not networkTablesConnected:
                     break
