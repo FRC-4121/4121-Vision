@@ -32,7 +32,7 @@ from typing import *
 import numpy as np
 
 # Team 4121 module imports
-from camera.single import FRCWebCam
+from camera.usb import UsbCamera as FRCWebCam
 from vision.glob._2024 import *
 
 # Set up basic logging

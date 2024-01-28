@@ -17,7 +17,6 @@
 # System imports
 import sys
 import os
-import logging
 from typing import *
 import cv2 as cv
 import numpy as np
@@ -44,10 +43,6 @@ def load_cscore():
         CvSource = cscore.CvSource
         VideoMode = cscore.VideoMode
 
-
-# Set up basic logging
-logging.basicConfig(level=logging.DEBUG)
-
 team4121home = os.environ.get("TEAM4121HOME")
 if None == team4121home:
     team4121home = os.getcwd()
@@ -60,21 +55,8 @@ if None == team4121config:
 calibration_dir = team4121home + "config" + team4121config
 
 
-def find_cams(port: int):
-    file = f"/sys/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.{port}/1-1.{port}:1.0/video4linux"
-    if os.path.exists(file):
-        files = [
-            int(x[5:])
-            for x in os.listdir(file)
-            if x[:5] == "video" and x[5:].isnumeric()
-        ]
-        files.sort()
-        if len(files) > 0:
-            return files[0]
-
-
 # Define the web camera class
-class FRCWebCam:
+class CameraBase:
     config = {"": {}}
     init = False
     stream = cscore_available
@@ -89,35 +71,20 @@ class FRCWebCam:
         csname: Optional[str] = None,
         profile: bool = False,
     ):
-        if not FRCWebCam.stream:
+        if not CameraBase.stream:
             csname = None
-        if not FRCWebCam.save:
+        if not CameraBase.save:
             videofile = None
         self.profile = profile
         self.name = name
-        port = self.get_config("PORT", None)
-        if port is not None:
-            port = find_cams(port)
-        if port is None:
-            self.device_id = self.get_config("ID", "0")
-            self.device_id = (
-                int(self.device_id) if self.device_id.isnumeric() else self.device_id
-            )
-        else:
-            self.device_id = port
+        
 
         # Open a log file
-        logFilename = "logs/webcam/log_{}_{}.txt".format(self.name, timestamp)
+        logFilename =  "{}/logs/webcam/log_{}_{}.txt".format(team4121home, self.name, timestamp)
         if videofile is None:
             videofile = "{}_{}".format(name, timestamp)
         self.log_file = open(logFilename, "w")
         self.log_file.write("Initializing webcam: {}\n".format(self.name))
-        if self.device_id == "":
-            print("Device ID not specified for camera {}".format(self.name))
-            self.log_file.write(
-                "Device ID not specified for camera {}\n".format(self.name)
-            )
-            return
         # Initialize instance variables
         self.undistort_img = False
 
@@ -127,17 +94,6 @@ class FRCWebCam:
         self.fov = float(self.get_config("FOV", 0.0))
         self.fps = int(self.get_config("FPS", 30))
         self.streamRes = int(self.get_config("STREAM_RES", 1))
-
-        # Set up web camera
-        # self.camStream = cv.VideoCapture(self.device_id)
-        self.camStream = cv.VideoCapture(self.device_id)
-        self.camStream.set(cv.CAP_PROP_FRAME_WIDTH, self.width)
-        self.camStream.set(cv.CAP_PROP_FRAME_HEIGHT, self.height)
-        self.camStream.set(
-            cv.CAP_PROP_BRIGHTNESS, float(self.get_config("BRIGHTNESS", 0))
-        )
-        self.camStream.set(cv.CAP_PROP_EXPOSURE, int(self.get_config("EXPOSURE", 0)))
-        self.camStream.set(cv.CAP_PROP_FPS, self.fps)
 
         # Set up video writer
         self.videoFilename = "videos/" + videofile + ".avi"
@@ -165,16 +121,10 @@ class FRCWebCam:
         else:
             self.log_file.write("Video writer is NOT open\n")
 
-        # Make sure video capture is opened
-        if self.camStream.isOpened() == False:
-            print("Camera stream is not open")
-            self.camStream.open(self.device_id)
-
         # Initialize blank frames
         self.frame = np.zeros(shape=(self.width, self.height, 3), dtype=np.uint8)
 
-        # Grab an initial frame
-        self.grabbed, self.frame = self.camStream.read()
+        self.grabbed = True
 
         # Name the stream
         self.name = name
@@ -214,9 +164,9 @@ class FRCWebCam:
 
     @staticmethod
     def read_config_file(file, reload: bool = False) -> bool:
-        if FRCWebCam.init and not reload:
+        if CameraBase.init and not reload:
             return True
-        FRCWebCam.init = True
+        CameraBase.init = True
         # Declare local variables
         value_section = ""
         # Open the file and read contents
@@ -243,14 +193,14 @@ class FRCWebCam:
 
                 if upper_line[-1] == ":":
                     value_section = upper_line[:-1]
-                    if not value_section in FRCWebCam.config:
-                        FRCWebCam.config[value_section] = {}
+                    if not value_section in CameraBase.config:
+                        CameraBase.config[value_section] = {}
                 elif split_line[0] == "":
                     value_section = ""
-                    if not value_section in FRCWebCam.config:
-                        FRCWebCam.config[value_section] = {}
+                    if not value_section in CameraBase.config:
+                        CameraBase.config[value_section] = {}
                 else:
-                    FRCWebCam.config[value_section][split_line[0].upper()] = split_line[
+                    CameraBase.config[value_section][split_line[0].upper()] = split_line[
                         1
                     ]
 
@@ -259,13 +209,17 @@ class FRCWebCam:
 
         return True
 
+    # Override point for camera
+    def read_frame_raw(self) -> (bool, np.ndarray):
+        return False, np.zeros((self.width, self.height, 3))
+
     # Get a camera configuration value
     def get_config(self, name: str, default: str) -> str:
-        if self.name in FRCWebCam.config:
-            cfg = FRCWebCam.config[self.name]
+        if self.name in CameraBase.config:
+            cfg = CameraBase.config[self.name]
             if name in cfg:
                 return cfg[name]
-        cfg = FRCWebCam.config[""]
+        cfg = CameraBase.config[""]
         if name in cfg:
             return cfg[name]
         return default
