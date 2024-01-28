@@ -125,7 +125,7 @@ class FRCWebCam:
         self.height = int(self.get_config("HEIGHT", 240))
         self.width = int(self.get_config("WIDTH", 320))
         self.fov = float(self.get_config("FOV", 0.0))
-        self.fps = int(self.get_config("FPS", 15))
+        self.fps = int(self.get_config("FPS", 30))
         self.streamRes = int(self.get_config("STREAM_RES", 1))
 
         # Set up web camera

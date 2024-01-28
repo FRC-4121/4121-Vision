@@ -16,7 +16,7 @@ def get_tls(name: str, init):
     return var
 
 
-cams = [0, 2]
+cams = [0]
 params = (8.25, 8.25, 320, 240)
 tag_size = 0.16
 
@@ -60,9 +60,7 @@ class Runner:
                 self.lastGrabbed = False
             return
 
-        print(f"before read of {self.id}")
         grabbed, frame = self.camera.read()
-        print(f"after read of {self.id}")
 
         if not grabbed:
             if self.lastGrabbed:
@@ -172,4 +170,4 @@ def run_single():
             break
 
 
-run_multi()
+run_single()

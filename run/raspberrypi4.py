@@ -44,11 +44,11 @@ visionFile = team4121home + "/config/" + team4121config + "/VisionSettings.txt"
 cameraValues = {}
 
 # Define program control flags
-videoTesting = False
+videoTesting = True
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
-syncCamera = False
+syncCamera = True
 startupSleep = 0
 
 if getenv("DISPLAY") is None:  # We're on the robot, do stuff for realsies

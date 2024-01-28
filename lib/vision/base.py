@@ -156,6 +156,7 @@ class VisionBase:
 
         # Blur image to remove noise
         blur = cv.GaussianBlur(imgRaw, (13, 13), 0)
+        # blur = imgRaw
 
         # Convert from BGR to HSV colorspace
         hsv = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
