@@ -9,6 +9,7 @@ import cv2 as cv
 
 Picamera2.set_logging(Picamera2.WARNING)
 
+
 # Use a picam
 class PiCam(CameraBase):
     def __init__(
@@ -29,5 +30,6 @@ class PiCam(CameraBase):
     def read_frame_raw(self) -> (bool, np.ndarray):
         self.frame = cv.cvtColor(self.camStream.capture_array(), cv.COLOR_BGR2RGB)
         return True, self.frame
+
 
 CameraBase.types["PI"] = PiCam

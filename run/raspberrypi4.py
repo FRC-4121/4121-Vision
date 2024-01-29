@@ -68,6 +68,7 @@ timeString = "{}-{}-{}_{}:{}:{}".format(
 
 nt = ntcore.NetworkTableInstance.getDefault()
 
+
 def unwrap_or(val, default):
     if val is None:
         return default
@@ -84,6 +85,7 @@ stop = False
 minFps = 100
 maxFps = 0
 avgFps = 0
+
 
 def handle_field_objects(
     frame: np.ndarray, rings: List[FoundObject], tags: List[FoundObject]
@@ -102,7 +104,9 @@ def handle_field_objects(
     if videoTesting:
         cv.putText(
             frame,
-            "{:4.1f}/{:4.1f}/{:4.1f}/{:4.1f} FPS".format(fieldFps, avgFps, minFps, maxFps),
+            "{:4.1f}/{:4.1f}/{:4.1f}/{:4.1f} FPS".format(
+                fieldFps, avgFps, minFps, maxFps
+            ),
             (0, 15),
             cv.FONT_HERSHEY_SIMPLEX,
             0.5,
@@ -219,6 +223,7 @@ def handle_field_objects(
     done += 1
     fieldFrames += 1
 
+
 # Define main processing function
 def main():
     global timeString, networkTablesConnected, visionTable, done
@@ -249,13 +254,15 @@ def main():
                 nt.setServer(nt_server_addr)
                 nt.startClient3("pi4")
                 visionTable = nt.getTable("vision")
-                
-                log_file.write("Connected to Networktables on {} \n".format(nt_server_addr))
+
+                log_file.write(
+                    "Connected to Networktables on {} \n".format(nt_server_addr)
+                )
 
                 visionTable.putNumber("RobotStop", 0)
 
                 timeString = visionTable.getString("Time", timeString)
-                
+
                 # networkTablesConnected = nt.isConnected()
         except Exception as e:
             log_file.write("Error:  Unable to connect to Network tables.\n")
@@ -266,7 +273,7 @@ def main():
             if nt.isConnected()
             else "Failed to connect to table\n"
         )
-        
+
         fieldThread = None
         if not syncCamera:
             fieldCam.profile = False
@@ -299,13 +306,17 @@ def main():
             if not (syncCamera or videoTesting or networkTablesConnected):
                 time.sleep(0.0001)
         end = time.monotonic()
-        
-        log_file.write("Average field FPS: {}\n".format(fieldFrames / (end - start)))
+
+        log_file.write(
+            "Average field FPS: {:5.2f}/{:5.2f}/{:5.2f}/{:5.2f}\n".format(
+                fieldFrames / (end - start), avgFps, minFps, maxFps
+            )
+        )
 
         # Close all open windows (for testing)
         if videoTesting:
             cv.destroyAllWindows()
-        
+
         if fieldThread is not None:
             fieldThread.kill()
 
@@ -314,10 +325,13 @@ def main():
 
 
 if __name__ == "__main__":
+
     def stopit(*args):
         global stop
         stop = True
+
     import signal
+
     signal.signal(signal.SIGUSR1, stopit)
     signal.signal(signal.SIGINT, stopit)
     main()

@@ -121,9 +121,9 @@ class VisionBase:
                     if not value_section in VisionBase.config:
                         VisionBase.config[value_section] = {}
                 else:
-                    VisionBase.config[value_section][
-                        split_line[0].upper()
-                    ] = split_line[1]
+                    VisionBase.config[value_section][split_line[0].upper()] = (
+                        split_line[1]
+                    )
 
         except FileNotFoundError:
             return False

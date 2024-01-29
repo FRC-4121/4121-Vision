@@ -61,7 +61,7 @@ if len(cams) > 0:
                 )
 
             cv.imshow(name, frame)
-            
+
         current = time.monotonic()
         print(1 / (current - last), end="\r")
         last = current

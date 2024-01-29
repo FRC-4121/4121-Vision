@@ -43,6 +43,7 @@ def load_cscore():
         CvSource = cscore.CvSource
         VideoMode = cscore.VideoMode
 
+
 team4121home = os.environ.get("TEAM4121HOME")
 if None == team4121home:
     team4121home = os.getcwd()
@@ -81,10 +82,11 @@ class CameraBase:
             videofile = None
         self.profile = profile
         self.name = name
-        
 
         # Open a log file
-        logFilename =  "{}/logs/webcam/log_{}_{}.txt".format(team4121home, self.name, timestamp)
+        logFilename = "{}/logs/webcam/log_{}_{}.txt".format(
+            team4121home, self.name, timestamp
+        )
         if videofile is None:
             videofile = "{}_{}".format(name, timestamp)
         self.log_file = open(logFilename, "w")
@@ -203,15 +205,15 @@ class CameraBase:
                     if not value_section in CameraBase.config:
                         CameraBase.config[value_section] = {}
                 else:
-                    CameraBase.config[value_section][split_line[0].upper()] = split_line[
-                        1
-                    ]
+                    CameraBase.config[value_section][split_line[0].upper()] = (
+                        split_line[1]
+                    )
 
         except FileNotFoundError:
             return False
 
         return True
-    
+
     @staticmethod
     def init_cam(
         name: str,
@@ -221,7 +223,7 @@ class CameraBase:
         profile: bool = False,
     ):
         ty = None
-        
+
         if name in CameraBase.config:
             cfg = CameraBase.config[name]
             if "TYPE" in cfg:
@@ -232,7 +234,7 @@ class CameraBase:
                 ty = CameraBase.types[cfg["TYPE"]]
         if ty is None:
             raise KeyError("camera type not specified!")
-        
+
         return ty(name, timestamp, videofile, csname, profile)
 
     # Override point for camera

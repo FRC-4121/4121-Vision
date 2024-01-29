@@ -4,6 +4,7 @@ import os
 import cv2 as cv
 import numpy as np
 
+
 def find_cams(port: int):
     file = f"/sys/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.{port}/1-1.{port}:1.0/video4linux"
     if os.path.exists(file):
@@ -15,6 +16,7 @@ def find_cams(port: int):
         files.sort()
         if len(files) > 0:
             return files[0]
+
 
 # Camera using `cv.VideoCapture`, best for USB camera
 class UsbCamera(CameraBase):
@@ -37,7 +39,7 @@ class UsbCamera(CameraBase):
             )
         else:
             self.device_id = port
-        
+
         super().__init__(name, timestamp, videofile, csname, profile)
 
         self.camStream = cv.VideoCapture(self.device_id)
@@ -54,5 +56,6 @@ class UsbCamera(CameraBase):
         if not good:
             frame = np.zeros((self.width, self.height, 3))
         return good, frame
+
 
 CameraBase.types["USB"] = UsbCamera
