@@ -81,18 +81,28 @@ fieldFrames = 0
 done = 0
 lastFieldTime = time.monotonic()
 stop = False
+minFps = 100
+maxFps = 0
+avgFps = 0
 
 def handle_field_objects(
     frame: np.ndarray, rings: List[FoundObject], tags: List[FoundObject]
 ):
-    global done, fieldFrame, lastFieldTime, fieldFrames
+    global done, fieldFrame, lastFieldTime, fieldFrames, minFps, maxFps, avgFps
     fieldTime = time.monotonic()
     fieldFps = 1 / (fieldTime - lastFieldTime)
     lastFieldTime = fieldTime
+    avgFps *= min(fieldFrames, 150)
+    avgFps += fieldFps
+    avgFps /= min(fieldFrames, 150) + 1
+    if fieldFrames < 15 and fieldFps < minFps:
+        minFps = fieldFps
+    if fieldFrames < 15 and fieldFps > maxFps:
+        maxFps = fieldFps
     if videoTesting:
         cv.putText(
             frame,
-            "{:3.1f} FPS".format(fieldFps),
+            "{:4.1f}/{:4.1f}/{:4.1f}/{:4.1f} FPS".format(fieldFps, avgFps, minFps, maxFps),
             (0, 15),
             cv.FONT_HERSHEY_SIMPLEX,
             0.5,
