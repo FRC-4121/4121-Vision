@@ -33,6 +33,7 @@ import numpy as np
 
 # Team 4121 module imports
 import camera.picam
+import camera.frame
 import camera.usb
 from camera.base import CameraBase
 from vision.glob._2024 import *
@@ -200,7 +201,7 @@ class CameraCallback:
         self.frame = frame
 
         if nt.isConnected():
-            self.table.putNumber("FieldFPS", fieldFps)
+            self.table.putNumber("FPS", fieldFps)
 
             self.table.putNumber("RingsFound", len(rings))
 
@@ -322,6 +323,7 @@ def main():
         )
 
         cams = [CameraLoop("USB1"), CameraLoop("USB2")]
+        # cams = [CameraLoop("DUMMY")]
         threads = []
 
         if not syncCamera:
