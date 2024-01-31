@@ -244,6 +244,10 @@ def main():
 
     # Open a log file
     logFilename = team4121home + "/logs/run/log_" + timeString + ".txt"
+    linkPath = team4121home + "/logs/run/log_LATEST.txt"
+    if os.path.exists(linkPath):
+        os.unlink(linkPath)
+    os.symlink("log_" + timeString + ".txt", linkPath)
     with open(logFilename, "w") as log_file:
         log_file.write("run started on {}.\n".format(datetime.datetime.now()))
         log_file.write("")

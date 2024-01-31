@@ -87,6 +87,10 @@ class CameraBase:
         logFilename = "{}/logs/webcam/log_{}_{}.txt".format(
             team4121home, self.name, timestamp
         )
+        linkPath = "{}/logs/webcam/log_{}_LATEST.txt".format(team4121home, self.name)
+        if os.path.exists(linkPath):
+            os.unlink(linkPath)
+        os.symlink("log_{}_{}.txt".format(self.name, timestamp), linkPath)
         if videofile is None:
             videofile = "{}_{}".format(name, timestamp)
         self.log_file = open(logFilename, "w")
