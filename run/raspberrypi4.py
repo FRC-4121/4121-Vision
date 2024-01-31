@@ -36,6 +36,7 @@ import camera.picam
 import camera.usb
 from camera.base import CameraBase
 from vision.glob._2024 import *
+from threads import KillableThread
 
 # Set up basic logging
 logging.basicConfig(level=logging.DEBUG)
@@ -76,152 +77,201 @@ def unwrap_or(val, default):
         return val
 
 
-visionTable = None
-fieldFrame = np.zeros((480, 640, 3))
-fieldFrames = 0
 done = 0
-lastFieldTime = time.monotonic()
 stop = False
-minFps = 100
-maxFps = 0
-avgFps = 0
 
 
-def handle_field_objects(
-    frame: np.ndarray, rings: List[FoundObject], tags: List[FoundObject]
-):
-    global done, fieldFrame, lastFieldTime, fieldFrames, minFps, maxFps, avgFps
-    fieldTime = time.monotonic()
-    fieldFps = 1 / (fieldTime - lastFieldTime)
-    lastFieldTime = fieldTime
-    avgFps *= min(fieldFrames, 150)
-    avgFps += fieldFps
-    avgFps /= min(fieldFrames, 150) + 1
-    if fieldFrames < 15 and fieldFps < minFps:
-        minFps = fieldFps
-    if fieldFrames < 15 and fieldFps > maxFps:
-        maxFps = fieldFps
-    if videoTesting:
-        cv.putText(
-            frame,
-            "{:4.1f}/{:4.1f}/{:4.1f}/{:4.1f} FPS".format(
-                fieldFps, avgFps, minFps, maxFps
-            ),
-            (0, 15),
-            cv.FONT_HERSHEY_SIMPLEX,
-            0.5,
-            (255, 255, 255),
-            1,
-        )
-        for ring in rings:
-            cv.rectangle(
-                frame,
-                (ring.x, ring.y),
-                ((ring.x + ring.w), (ring.y + ring.h)),
-                (0, 0, 255),
-                2,
-            )
-            cv.putText(
-                frame,
-                "D: {:6.2f}".format(ring.distance),
-                (ring.x + 10, ring.y + 15),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.3,
-                (0, 0, 0),
-                1,
-            )
-            cv.putText(
-                frame,
-                "A: {:6.2f}".format(ring.angle),
-                (ring.x + 10, ring.y + 30),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.3,
-                (0, 0, 0),
-                1,
-            )
-            cv.putText(
-                frame,
-                "O: {:6.2f}".format(ring.offset),
-                (ring.x + 10, ring.y + 45),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.3,
-                (0, 0, 0),
-                1,
-            )
-        for tag in tags:
-            cv.rectangle(
-                frame,
-                (tag.x, tag.y),
-                ((tag.x + tag.w), (tag.y + tag.h)),
-                (255, 0, 255),
-                2,
-            )
-            cv.putText(
-                frame,
-                "D: {:6.2f}".format(tag.distance),
-                (tag.x + 10, tag.y + 15),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.3,
-                (0, 255, 0),
-                1,
-            )
-            cv.putText(
-                frame,
-                "A: {:6.2f}".format(tag.angle),
-                (tag.x + 10, tag.y + 30),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.3,
-                (0, 255, 0),
-                1,
-            )
-            cv.putText(
-                frame,
-                "O: {:6.2f}".format(tag.offset),
-                (tag.x + 10, tag.y + 45),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.3,
-                (0, 255, 0),
-                1,
-            )
-            cv.putText(
-                frame,
-                "I: {}".format(tag.ident),
-                (tag.x + 10, tag.y + 60),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.3,
-                (0, 255, 0),
-                1,
-            )
+class CameraCallback:
+    def __init__(self, table):
+        self.table = table
+        self.frame = np.zeros((480, 640, 3))
+        self.frames = 0
+        self.minFps = 100
+        self.maxFps = 0
+        self.avgFps = 0
+        self.lastTime = time.monotonic()
 
-    fieldFrame = frame
-    if nt.isConnected():
-        visionTable.putNumber("FieldFPS", fieldFps)
-        visionTable.putNumber("RingsFound", len(rings))
+    def __call__(
+        self, frame: np.ndarray, rings: List[FoundObject], tags: List[FoundObject]
+    ):
+        global done
+        fieldTime = time.monotonic()
+        fieldFps = 1 / (fieldTime - self.lastTime)
+        self.lastTime = fieldTime
+        self.avgFps *= min(self.frames, 150)
+        self.avgFps += fieldFps
+        self.avgFps /= min(self.frames, 150) + 1
+        if self.frames < 15 and fieldFps < self.minFps:
+            self.minFps = fieldFps
+        if self.frames < 15 and fieldFps > self.maxFps:
+            self.maxFps = fieldFps
+        if videoTesting:
+            cv.putText(
+                frame,
+                "{:4.1f}/{:4.1f}/{:4.1f}/{:4.1f} FPS".format(
+                    fieldFps, self.avgFps, self.minFps, self.maxFps
+                ),
+                (0, 15),
+                cv.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (255, 255, 255),
+                1,
+            )
+            for ring in rings:
+                cv.rectangle(
+                    frame,
+                    (ring.x, ring.y),
+                    ((ring.x + ring.w), (ring.y + ring.h)),
+                    (0, 0, 255),
+                    2,
+                )
+                cv.putText(
+                    frame,
+                    "D: {:6.2f}".format(ring.distance),
+                    (ring.x + 10, ring.y + 15),
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (0, 0, 0),
+                    1,
+                )
+                cv.putText(
+                    frame,
+                    "A: {:6.2f}".format(ring.angle),
+                    (ring.x + 10, ring.y + 30),
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (0, 0, 0),
+                    1,
+                )
+                cv.putText(
+                    frame,
+                    "O: {:6.2f}".format(ring.offset),
+                    (ring.x + 10, ring.y + 45),
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (0, 0, 0),
+                    1,
+                )
+            for tag in tags:
+                cv.rectangle(
+                    frame,
+                    (tag.x, tag.y),
+                    ((tag.x + tag.w), (tag.y + tag.h)),
+                    (255, 0, 255),
+                    2,
+                )
+                cv.putText(
+                    frame,
+                    "D: {:6.2f}".format(tag.distance),
+                    (tag.x + 10, tag.y + 15),
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (0, 255, 0),
+                    1,
+                )
+                cv.putText(
+                    frame,
+                    "A: {:6.2f}".format(tag.angle),
+                    (tag.x + 10, tag.y + 30),
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (0, 255, 0),
+                    1,
+                )
+                cv.putText(
+                    frame,
+                    "O: {:6.2f}".format(tag.offset),
+                    (tag.x + 10, tag.y + 45),
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (0, 255, 0),
+                    1,
+                )
+                cv.putText(
+                    frame,
+                    "I: {}".format(tag.ident),
+                    (tag.x + 10, tag.y + 60),
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (0, 255, 0),
+                    1,
+                )
 
-        for i in range(len(rings)):
-            visionTable.putNumber(
-                f"Rings.{i}.distance", unwrap_or(rings[i].distance, -9999.0)
-            )
-            visionTable.putNumber(
-                f"Rings.{i}.angle", unwrap_or(rings[i].angle, -9999.0)
-            )
-            visionTable.putNumber(
-                f"Rings.{i}.offset", unwrap_or(rings[i].offset, -9999.0)
-            )
+        self.frame = frame
 
-        visionTable.putNumber("TagsFound", len(tags))
-        for i in range(len(tags)):
-            visionTable.putNumber(
-                f"Tags.{i}.distance", unwrap_or(tags[i].distance, -9999.0)
-            )
-            visionTable.putNumber(f"Tags.{i}.angle", unwrap_or(tags[i].angle, -9999.0))
-            visionTable.putNumber(
-                f"Tags.{i}.offset", unwrap_or(tags[i].offset, -9999.0)
-            )
-            visionTable.putNumber(f"Tags.{i}.id", unwrap_or(tags[i].ident, -9999.0))
+        if nt.isConnected():
+            self.table.putNumber("FieldFPS", fieldFps)
 
-    done += 1
-    fieldFrames += 1
+            self.table.putNumber("RingsFound", len(rings))
+
+            for i in range(len(rings)):
+                self.table.putNumber(
+                    f"Rings.{i}.distance", unwrap_or(rings[i].distance, -9999.0)
+                )
+                self.table.putNumber(
+                    f"Rings.{i}.angle", unwrap_or(rings[i].angle, -9999.0)
+                )
+                self.table.putNumber(
+                    f"Rings.{i}.offset", unwrap_or(rings[i].offset, -9999.0)
+                )
+
+            self.table.putNumber("TagsFound", len(tags))
+            for i in range(len(tags)):
+                self.table.putNumber(
+                    f"Tags.{i}.distance", unwrap_or(tags[i].distance, -9999.0)
+                )
+                self.table.putNumber(
+                    f"Tags.{i}.angle", unwrap_or(tags[i].angle, -9999.0)
+                )
+                self.table.putNumber(
+                    f"Tags.{i}.offset", unwrap_or(tags[i].offset, -9999.0)
+                )
+                self.table.putNumber(f"Tags.{i}.id", unwrap_or(tags[i].ident, -9999.0))
+
+        done += 1
+        self.frames += 1
+
+
+class CameraLoop:
+    def __init__(
+        self,
+        name: str,
+        table: ntcore.NetworkTable | str | None = None,
+        videofile: str | bool = False,
+        csname: str | bool = False,
+        profile: bool = False,
+    ):
+        if type(videofile) is bool:
+            if videofile:
+                videofile = f"{name}_{timeString}"
+            else:
+                videofile = None
+        if type(csname) is bool:
+            if csname:
+                csname = name.lower()
+            else:
+                csname = None
+
+        if table is None:
+            table = name.lower()
+
+        if type(table) is str:
+            table = nt.getTable(table)
+
+        self.name = name
+        self.cam = CameraBase.init_cam(name, timeString, videofile, csname, profile)
+        self.callback = CameraCallback(table)
+        self.libs = (RingVisionLibrary(), AprilTagVisionLibrary())
+
+    def launch_loop(self) -> KillableThread:
+        self.thread = self.cam.launch_libs_loop(*self.libs, callback=self.callback)
+        return self.thread
+
+    def cam_tick_sync(self):
+        self.cam.use_libs_sync(*self.libs, callback=self.callback)
+
+    def update_video(self):
+        cv.imshow(self.name, self.callback.frame)
 
 
 # Define main processing function
@@ -232,15 +282,7 @@ def main():
 
     # Define objects
     CameraBase.read_config_file(cameraFile)
-    fieldCam = CameraBase.init_cam(
-        "USB2", timeString, videofile="FIELD_" + timeString, csname="field"
-    )
     VisionBase.read_vision_file(visionFile)
-
-    ringLib = RingVisionLibrary()
-    tagLib = AprilTagVisionLibrary()
-    # ringLib = VisionBase()
-    # tagLib = VisionBase()
 
     # Open a log file
     logFilename = team4121home + "/logs/run/log_" + timeString + ".txt"
@@ -251,21 +293,22 @@ def main():
     with open(logFilename, "w") as log_file:
         log_file.write("run started on {}.\n".format(datetime.datetime.now()))
         log_file.write("")
+        controlTable = None
 
         # Connect NetworkTables
         try:
             if networkTablesConnected:
                 nt.setServer(nt_server_addr)
                 nt.startClient3("pi4")
-                visionTable = nt.getTable("vision")
+                controlTable = nt.getTable("control")
 
                 log_file.write(
                     "Connected to Networktables on {} \n".format(nt_server_addr)
                 )
 
-                visionTable.putNumber("RobotStop", 0)
+                controlTable.putNumber("RobotStop", 0)
 
-                timeString = visionTable.getString("Time", timeString)
+                timeString = controlTable.getString("Time", timeString)
 
                 # networkTablesConnected = nt.isConnected()
         except Exception as e:
@@ -278,17 +321,17 @@ def main():
             else "Failed to connect to table\n"
         )
 
-        fieldThread = None
+        cams = [CameraLoop("USB1"), CameraLoop("USB2")]
+        threads = []
+
         if not syncCamera:
-            fieldCam.profile = False
-            fieldThread = fieldCam.launch_libs_loop(
-                ringLib, tagLib, callback=handle_field_objects
-            )
+            threads = [cam.launch_loop() for cam in cams]
         start = time.monotonic()
         # Start main processing loop
         while not stop:
             if videoTesting:
-                cv.imshow("Field", fieldFrame)
+                for cam in cams:
+                    cam.update_video()
 
             #################################
             # Check for stopping conditions #
@@ -300,32 +343,37 @@ def main():
 
             # Check for stop code from network tables
             if nt.isConnected():
-                robotStop = visionTable.getNumber("RobotStop", 0)
+                robotStop = controlTable.getNumber("RobotStop", 0)
                 if robotStop == 1 or not networkTablesConnected:
                     break
 
             if syncCamera:
-                fieldCam.use_libs_sync(ringLib, tagLib, callback=handle_field_objects)
+                for cam in cams:
+                    cam.cam_tick_sync()
 
             if not (syncCamera or videoTesting or networkTablesConnected):
                 time.sleep(0.0001)
         end = time.monotonic()
 
-        log_file.write(
-            "Average field FPS: {:5.2f}/{:5.2f}/{:5.2f}/{:5.2f}\n".format(
-                fieldFrames / (end - start), avgFps, minFps, maxFps
+        for cam in cams:
+            log_file.write(
+                "Average field FPS: {:5.2f}/{:5.2f}/{:5.2f}/{:5.2f}\n".format(
+                    cam.callback.frames / (end - start),
+                    cam.callback.avgFps,
+                    cam.callback.minFps,
+                    cam.callback.maxFps,
+                )
             )
-        )
 
         # Close all open windows (for testing)
         if videoTesting:
             cv.destroyAllWindows()
 
-        if fieldThread is not None:
-            fieldThread.kill()
+        for thread in threads:
+            thread.kill()
 
         # Close the log file
-        log_file.write("Run stopped on {}.".format(datetime.datetime.now()))
+        log_file.write("Run stopped on {}.\n".format(datetime.datetime.now()))
 
 
 if __name__ == "__main__":
