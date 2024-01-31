@@ -13,6 +13,7 @@ class SingleFrame(CameraBase):
         self.frame = (
             frame if frame is not None else np.zeros((self.height, self.width, 3), dtype=np.uint8)
         )
+        self.frame.fill(255)
 
     def read_frame_raw(self) -> (bool, np.ndarray):
         return True, self.frame.copy()

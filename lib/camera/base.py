@@ -290,6 +290,7 @@ class CameraBase:
             self.grabbed, frame = self.read_frame_raw()
 
             if not self.grabbed:
+                newFrame.fill(128)
                 return newFrame
 
             # Undistort image

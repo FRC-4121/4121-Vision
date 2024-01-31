@@ -64,11 +64,11 @@ class UsbCamera(CameraBase):
         self.camStream.set(cv.CAP_PROP_EXPOSURE, int(self.get_config("EXPOSURE", 100)))
         self.camStream.set(cv.CAP_PROP_FPS, self.fps)
         self.camStream.set(cv.CAP_PROP_FOURCC, cv.VideoWriter.fourcc(*"YUYV"))
-
+        self.evenTry = self.camStream.isOpened()
     def read_frame_raw(self) -> (bool, np.ndarray):
+        if not self.evenTry:
+            return False, np.zeros((0, 0, 3))
         good, frame = self.camStream.read()
-        if not good:
-            frame = np.zeros((self.width, self.height, 3))
         return good, frame
 
 
