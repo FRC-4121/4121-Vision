@@ -51,7 +51,7 @@ videoTesting = True
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
-syncCamera = True
+syncCamera = False
 startupSleep = 0
 
 if getenv("DISPLAY") is None:  # We're on the robot, do stuff for realsies
@@ -357,7 +357,8 @@ def main():
 
         for cam in cams:
             log_file.write(
-                "Average field FPS: {:5.2f}/{:5.2f}/{:5.2f}/{:5.2f}\n".format(
+                "Average FPS for {}: {:5.2f}/{:5.2f}/{:5.2f}/{:5.2f}\n".format(
+                    cam.name,
                     cam.callback.frames / (end - start),
                     cam.callback.avgFps,
                     cam.callback.minFps,

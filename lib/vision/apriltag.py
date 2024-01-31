@@ -1,8 +1,6 @@
 from vision.base import *
+from threads import get_tls
 import pyapriltags
-
-detector = pyapriltags.Detector(families="tag36h11")
-
 
 def cvt_res(
     r: pyapriltags.Detection, cameraWidth: int, cameraHeight: int, cameraFOV: float
@@ -50,6 +48,7 @@ class AprilTagVisionLibrary(VisionBase):
     def find_objects(
         self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int
     ) -> List[FoundObject]:
+        detector = get_tls("at_detect", lambda: pyapriltags.Detector(families="tag36h11"))
         gray = cv.cvtColor(imgRaw, cv.COLOR_BGR2GRAY)
         results = detector.detect(gray)
 
