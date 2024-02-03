@@ -62,9 +62,13 @@ class UsbCamera(CameraBase):
             cv.CAP_PROP_BRIGHTNESS, float(self.get_config("BRIGHTNESS", 50))
         )
         self.camStream.set(cv.CAP_PROP_EXPOSURE, int(self.get_config("EXPOSURE", 100)))
-        self.camStream.set(cv.CAP_PROP_FPS, self.fps)
+        self.camStream.set(cv.CAP_PROP_FPS, 1)
         self.camStream.set(cv.CAP_PROP_FOURCC, cv.VideoWriter.fourcc(*"YUYV"))
         self.evenTry = self.camStream.isOpened()
+
+    def post_init(self):
+        self.camStream.set(cv.CAP_PROP_FPS, self.fps)
+
     def read_frame_raw(self) -> (bool, np.ndarray):
         if not self.evenTry:
             return False, np.zeros((0, 0, 3))

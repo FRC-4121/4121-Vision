@@ -16,7 +16,7 @@ def get_tls(name: str, init):
     return var
 
 
-cams = [0]
+cams = [0, 2]
 params = (8.25, 8.25, 320, 240)
 tag_size = 0.16
 

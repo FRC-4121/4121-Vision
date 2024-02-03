@@ -244,6 +244,10 @@ class CameraBase:
     # Override point for camera
     def read_frame_raw(self) -> (bool, np.ndarray):
         return False, np.zeros((self.width, self.height, 3))
+    
+    # Some cameras (currently only USB) need further initalization to run after all of the cameras have been initialized. This method will run this.
+    def post_init(self):
+        pass
 
     # Get a camera configuration value
     def get_config(self, name: str, default: str) -> str:
@@ -281,6 +285,7 @@ class CameraBase:
             self.grabbed, self.frame = self.camStream.read()
 
     # Grab a frame from the camera, possibly with some preprocessing
+    # post_init MUST be called first!
     def read_frame(self) -> np.ndarray:
         # Declare frame for undistorted image
         newFrame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)

@@ -325,6 +325,10 @@ def main():
         cams = [CameraLoop("USB1"), CameraLoop("USB2")]
         # cams = [CameraLoop("DUMMY")]
         threads = []
+        
+        # post-initializer call, this MUST happen
+        for cam in cams:
+            cam.cam.post_init()
 
         if not syncCamera:
             threads = [cam.launch_loop() for cam in cams]
