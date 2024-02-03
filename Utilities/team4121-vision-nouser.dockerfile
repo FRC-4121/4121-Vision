@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
-#docker build -t team4121-vision-nouser:00.01 --force-rm --squash --network host -f team4121-vision-nouser.dockerfile .
+#docker build -t team4121-vision-nouser:00.02 --force-rm --squash --network host -f team4121-vision-nouser.dockerfile .
 #
-FROM ubuntu:22.04
+FROM ubuntu:23.04
 LABEL maintainer="victor.j.griswold@gmail.com"
 
 RUN apt-get update && apt-get install -y \
@@ -64,11 +64,16 @@ RUN mkdir /tmp/git_libsecret \
 #
 # git config --global credential.helper /usr/share/doc/git/contrib/credential/libsecret/git-credential-libsecret
 
+RUN rm -f /usr/lib/python3.11/EXTERNALLY-MANAGED
 RUN pip3 install numpy
 RUN pip3 install opencv-contrib-python
 RUN pip3 install robotpy-cscore
 RUN pip3 install apriltag
+RUN pip3 install pyapriltags
 RUN pip3 install wpilib
+
+# For Ubuntu 23 and higher, this is a phantom user which occupies the ID space from other distributions
+RUN userdel -r ubuntu
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US
