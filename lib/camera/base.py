@@ -244,7 +244,7 @@ class CameraBase:
     # Override point for camera
     def read_frame_raw(self) -> (bool, np.ndarray):
         return False, np.zeros((self.width, self.height, 3))
-    
+
     # Some cameras (currently only USB) need further initalization to run after all of the cameras have been initialized. This method will run this.
     def post_init(self):
         pass

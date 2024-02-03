@@ -1,5 +1,6 @@
 import os
 
+
 # How does this work? I have no idea!
 def find_cams(port: int):
     # Pi 4
@@ -24,6 +25,7 @@ def find_cams(port: int):
         files.sort()
         if len(files) > 0:
             return files[0]
+
 
 for port in range(4):
     id = find_cams(port)

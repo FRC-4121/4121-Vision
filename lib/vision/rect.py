@@ -52,34 +52,20 @@ class RectVisionLibrary(VisionBase):
                     continue
                 if cv.contourArea(contour) / (w * h) < minVis:
                     continue
-                # Calculate metrics
-                inches_per_pixel = (
-                    float(width) / w
-                )  # set up a general conversion factor
-                distanceToTargetPlane = inches_per_pixel * (
-                    cameraWidth / (2 * math.tan(math.radians(cameraFOV)))
-                )
-                offsetInInches = inches_per_pixel * ((x + (w / 2)) - (cameraWidth / 2))
-                angleToObject = -1 * math.degrees(
-                    math.atan((offsetInInches / distanceToTargetPlane))
-                )
-                distanceToObject = (
-                    math.cos(math.radians(angleToObject)) * distanceToTargetPlane
-                )
-                screenPercent = w * h / (cameraWidth * cameraHeight)
-                offset = -offsetInInches
 
                 data.append(
-                    FoundObject(
-                        self.name,
-                        x,
-                        y,
-                        w=w,
-                        h=h,
-                        distance=distanceToObject,
-                        angle=angleToObject,
-                        offset=offset,
-                        percent=screenPercent,
+                    populate_obj(
+                        FoundObject(
+                            self.name,
+                            x,
+                            y,
+                            w=w,
+                            h=h,
+                        ),
+                        width,
+                        cameraWidth,
+                        cameraHeight,
+                        cameraFOV,
                     )
                 )
 

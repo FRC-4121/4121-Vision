@@ -4,6 +4,7 @@ import os
 import cv2 as cv
 import numpy as np
 
+
 # How does this work? I have no idea!
 def find_cams(port: int):
     port = int(port)
@@ -19,7 +20,9 @@ def find_cams(port: int):
         if len(files) > 0:
             return files[0]
     # Pi 5
-    file = "/sys/devices/platform/axi/1000120000.pcie/1f00{0}00000.usb/xhci-hcd.{1}/usb{2}/{2}-{3}/{2}-{3}:1.0/video4linux".format(port % 2 + 2, port % 2, port % 2 * 2 + 1, port // 2 + 1)
+    file = "/sys/devices/platform/axi/1000120000.pcie/1f00{0}00000.usb/xhci-hcd.{1}/usb{2}/{2}-{3}/{2}-{3}:1.0/video4linux".format(
+        port % 2 + 2, port % 2, port % 2 * 2 + 1, port // 2 + 1
+    )
     if os.path.exists(file):
         files = [
             int(x[5:])
@@ -60,7 +63,7 @@ class UsbCamera(CameraBase):
         try:
             if not self.camStream.isOpened():
                 self.camStream.open(self.device_id)
-            self.evenTry = self.camStream.isOpened()\
+            self.evenTry = self.camStream.isOpened()
             if not self.evenTry:
                 return
             self.camStream.set(cv.CAP_PROP_FRAME_WIDTH, self.width)
@@ -75,7 +78,10 @@ class UsbCamera(CameraBase):
             self.evenTry = False
 
     def post_init(self):
-        self.camStream.set(cv.CAP_PROP_FPS, self.fps)
+        try:
+            self.camStream.set(cv.CAP_PROP_FPS, self.fps)
+        except cv.error as e:
+            self.log_file.write(f"Error during post-init: {e}\n")
 
     def read_frame_raw(self) -> (bool, np.ndarray):
         if not self.evenTry:

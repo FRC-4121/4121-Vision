@@ -2,6 +2,7 @@ from vision.base import *
 from threads import get_tls
 import pyapriltags
 
+
 def cvt_res(
     r: pyapriltags.Detection, cameraWidth: int, cameraHeight: int, cameraFOV: float
 ) -> FoundObject:
@@ -11,30 +12,15 @@ def cvt_res(
     h = int(ys[-1] - ys[0])
     x = int(r.center[0] - w // 2)
     y = int(r.center[1] - h // 2)
-    inches_per_pixel = 6.5 / w  # set up a general conversion factor
-    distanceToTargetPlane = inches_per_pixel * (
-        cameraWidth / (2 * math.tan(math.radians(cameraFOV)))
-    )
-    offsetInInches = inches_per_pixel * ((x + (w / 2)) - (cameraWidth / 2))
-    angleToObject = -1 * math.degrees(
-        math.atan((offsetInInches / distanceToTargetPlane))
-    )
-    distanceToObject = math.cos(math.radians(angleToObject)) * distanceToTargetPlane
-    screenPercent = w * h / (cameraWidth * cameraHeight)
-    offset = -offsetInInches
 
-    return FoundObject(
+    return populate_obj(FoundObject(
         "TAG",
         x,
         y,
         w=w,
         h=h,
-        distance=distanceToObject,
-        angle=angleToObject,
-        offset=offset,
-        percent=screenPercent,
         ident=r.tag_id,
-    )
+    ), 6.5, cameraWidth, cameraHeight, cameraFOV)
 
 
 class AprilTagVisionLibrary(VisionBase):
@@ -48,7 +34,9 @@ class AprilTagVisionLibrary(VisionBase):
     def find_objects(
         self, imgRaw: np.ndarray, cameraWidth: int, cameraHeight: int, cameraFOV: int
     ) -> List[FoundObject]:
-        detector = get_tls("at_detect", lambda: pyapriltags.Detector(families="tag36h11"))
+        detector = get_tls(
+            "at_detect", lambda: pyapriltags.Detector(families="tag36h11")
+        )
         gray = cv.cvtColor(imgRaw, cv.COLOR_BGR2GRAY)
         results = detector.detect(gray)
 

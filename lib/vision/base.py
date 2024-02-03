@@ -247,3 +247,22 @@ class VisionBase:
         calcThread.start()
 
         return self
+
+
+def populate_obj(
+    obj: FoundObject,
+    width: float,
+    cameraWidth: int,
+    cameraHeight: int,
+    cameraFOV: float,
+) -> FoundObject:
+    # Calculate metrics
+    inches_per_pixel = float(width) / obj.w  # set up a general conversion factor
+    distanceToTargetPlane = inches_per_pixel * (
+        cameraWidth / (2 * math.tan(math.radians(cameraFOV / 2)))
+    )
+    offsetInInches = inches_per_pixel * ((obj.x + (obj.w / 2)) - (cameraWidth / 2))
+    obj.angle = -math.degrees(math.atan((offsetInInches / distanceToTargetPlane)))
+    obj.distance = math.cos(math.radians(obj.angle)) * distanceToTargetPlane
+    obj.offset = -offsetInInches
+    return obj
