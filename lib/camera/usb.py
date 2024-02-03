@@ -56,15 +56,23 @@ class UsbCamera(CameraBase):
         super().__init__(name, timestamp, videofile, csname, profile)
 
         self.camStream = cv.VideoCapture(self.device_id)
-        self.camStream.set(cv.CAP_PROP_FRAME_WIDTH, self.width)
-        self.camStream.set(cv.CAP_PROP_FRAME_HEIGHT, self.height)
-        self.camStream.set(
-            cv.CAP_PROP_BRIGHTNESS, float(self.get_config("BRIGHTNESS", 50))
-        )
-        self.camStream.set(cv.CAP_PROP_EXPOSURE, int(self.get_config("EXPOSURE", 100)))
-        self.camStream.set(cv.CAP_PROP_FPS, 1)
-        self.camStream.set(cv.CAP_PROP_FOURCC, cv.VideoWriter.fourcc(*"YUYV"))
-        self.evenTry = self.camStream.isOpened()
+        self.camStream.setExceptionMode(True)
+        try:
+            if not self.camStream.isOpened():
+                self.camStream.open(self.device_id)
+            self.evenTry = self.camStream.isOpened()\
+            if not self.evenTry:
+                return
+            self.camStream.set(cv.CAP_PROP_FRAME_WIDTH, self.width)
+            self.camStream.set(cv.CAP_PROP_FRAME_HEIGHT, self.height)
+            self.camStream.set(
+                cv.CAP_PROP_BRIGHTNESS, float(self.get_config("BRIGHTNESS", 50))
+            )
+            self.camStream.set(cv.CAP_PROP_FPS, 1)
+            self.camStream.set(cv.CAP_PROP_FOURCC, cv.VideoWriter.fourcc(*"YUYV"))
+        except cv.error as e:
+            self.log_file.write(f"Error during camera initialization: {e}\n")
+            self.evenTry = False
 
     def post_init(self):
         self.camStream.set(cv.CAP_PROP_FPS, self.fps)
@@ -72,7 +80,11 @@ class UsbCamera(CameraBase):
     def read_frame_raw(self) -> (bool, np.ndarray):
         if not self.evenTry:
             return False, np.zeros((0, 0, 3))
-        good, frame = self.camStream.read()
+        try:
+            good, frame = self.camStream.read()
+        except cv.error as e:
+            self.log_file.write(f"Error reading camera: {e}\n")
+            return False, np.zeros((0, 0, 3))
         return good, frame
 
 
