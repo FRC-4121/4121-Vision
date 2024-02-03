@@ -80,6 +80,9 @@ class UsbCamera(CameraBase):
     def read_frame_raw(self) -> (bool, np.ndarray):
         if not self.evenTry:
             return False, np.zeros((0, 0, 3))
+        if not self.camStream.isOpened():
+            self.evenTry = False
+            return False, np.zeros((0, 0, 3))
         try:
             good, frame = self.camStream.read()
         except cv.error as e:
