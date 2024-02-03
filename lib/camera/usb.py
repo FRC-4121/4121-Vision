@@ -71,6 +71,10 @@ class UsbCamera(CameraBase):
             self.camStream.set(
                 cv.CAP_PROP_BRIGHTNESS, float(self.get_config("BRIGHTNESS", 50))
             )
+            try:
+                self.camStream.set(cv.CAP_PROP_EXPOSURE, float(self.get_config("EXPOSURE", 100)))
+            except cv.error as e:
+                self.log_file.write(f"Error setting camera exposure: {e}\n")
             self.camStream.set(cv.CAP_PROP_FPS, 1)
             self.camStream.set(cv.CAP_PROP_FOURCC, cv.VideoWriter.fourcc(*"YUYV"))
         except cv.error as e:

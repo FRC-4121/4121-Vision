@@ -16,7 +16,7 @@ def get_tls(name: str, init):
     return var
 
 
-cams = [0, 2]
+cams = [0]
 params = (8.25, 8.25, 320, 240)
 tag_size = 0.16
 
@@ -85,25 +85,41 @@ class Runner:
             cv2.line(frame, ptC, ptD, (0, 255, 0), 2)
             cv2.line(frame, ptD, ptA, (0, 255, 0), 2)
 
-            # draw the tag family on the image
             cv2.putText(
                 frame,
-                str(r.tag_id),
+                "A: " + str(r.tag_id),
                 (ptA[0], ptA[1] - 15),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
                 (0, 255, 0),
                 2,
             )
-
             cv2.putText(
                 frame,
-                "{: >4.2f} {: >4.2f} {: >4.2f}".format(*r.pose_t.flatten()),
-                (ptB[0] + 15, ptB[1]),
+                "B",
+                (ptB[0], ptB[1] - 15),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.3,
-                (255, 0, 255),
-                1,
+                0.5,
+                (0, 255, 0),
+                2,
+            )
+            cv2.putText(
+                frame,
+                "C",
+                (ptC[0], ptC[1] - 15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                2,
+            )
+            cv2.putText(
+                frame,
+                "D",
+                (ptD[0], ptD[1] - 15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                2,
             )
 
         current = time.monotonic()
@@ -113,7 +129,7 @@ class Runner:
             (0, 15),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.5,
-            (0, 0, 0),
+            (255, 255, 255),
             2,
         )
         self.lastTime = current

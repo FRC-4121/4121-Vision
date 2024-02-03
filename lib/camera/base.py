@@ -168,9 +168,6 @@ class CameraBase:
         else:
             self.cvs = None
 
-        # Log init complete message
-        self.log_file.write("Webcam initialization complete\n")
-
     @staticmethod
     def read_config_file(file, reload: bool = False) -> bool:
         if CameraBase.init and not reload:

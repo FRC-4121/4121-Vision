@@ -13,14 +13,22 @@ def cvt_res(
     x = int(r.center[0] - w // 2)
     y = int(r.center[1] - h // 2)
 
-    return populate_obj(FoundObject(
-        "TAG",
-        x,
-        y,
-        w=w,
-        h=h,
-        ident=r.tag_id,
-    ), 6.5, cameraWidth, cameraHeight, cameraFOV)
+    obj = populate_obj(
+        FoundObject(
+            "TAG",
+            x,
+            y,
+            w=w,
+            h=h,
+            ident=r.tag_id,
+        ),
+        6.5,
+        cameraWidth,
+        cameraHeight,
+        cameraFOV,
+    )
+    # obj.distance = math.sqrt(np.sum(np.square(r.pose_t)))
+    return obj
 
 
 class AprilTagVisionLibrary(VisionBase):
@@ -38,6 +46,11 @@ class AprilTagVisionLibrary(VisionBase):
             "at_detect", lambda: pyapriltags.Detector(families="tag36h11")
         )
         gray = cv.cvtColor(imgRaw, cv.COLOR_BGR2GRAY)
-        results = detector.detect(gray)
+        results = detector.detect(
+            gray,
+            # estimate_tag_pose=True,
+            # camera_params=(cameraWidth // 2, cameraHeight // 2, 1430 * cameraWidth // 1280, 1430 * cameraHeight // 720),
+            # tag_size=6.5,
+        )
 
         return [cvt_res(r, cameraWidth, cameraHeight, cameraFOV) for r in results]
