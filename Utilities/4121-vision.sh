@@ -16,6 +16,21 @@ if [ "$TEAM4121HOME" = "" ]; then
 fi
 export TEAM4121HOME
 
+if [ "$TEAM4121CONFIG" = "" ]; then
+  TEAM4121CONFIG="2024_competition"
+fi
+export TEAM4121CONFIG
+
+if [ "$TEAM4121VISIONTEST" = "" ]; then
+  TEAM4121VISIONTEST="False"
+fi
+export TEAM4121VISIONTEST
+
+if [ "$NT_SERVER_ADDR" = "" ]; then
+  NT_SERVER_ADDR="10.41.21.2"
+fi
+export NT_SERVER_ADDR
+
 STATUS=0
 
 case "$1" in

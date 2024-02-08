@@ -12,6 +12,10 @@ team4121config = os.environ.get("TEAM4121CONFIG")
 if None == team4121config:
     team4121config = "2024"
 
+team4121visiontest = os.environ.get("TEAM4121VISIONTEST")
+if None == team4121visiontest:
+    team4121visiontest = "True"
+
 nt_server_addr = os.environ.get("NT_SERVER_ADDR")
 if None == nt_server_addr:
     nt_server_addr = "10.41.21.2"
@@ -48,7 +52,10 @@ visionFile = team4121home + "/config/" + team4121config + "/VisionSettings.txt"
 cameraValues = {}
 
 # Define program control flags
-videoTesting = True
+if team4121visiontest.lower() in ['true', '1', 't', 'y', 'yes']:
+    videoTesting = True
+else:
+    videoTesting = False
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
