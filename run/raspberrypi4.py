@@ -16,6 +16,11 @@ team4121visiontest = os.environ.get("TEAM4121VISIONTEST")
 if None == team4121visiontest:
     team4121visiontest = "True"
 
+team4121camerasync = os.environ.get("TEAM4121CAMERASYNC")
+if None == team4121camerasync:
+    team4121camerasync = "False"
+
+
 nt_server_addr = os.environ.get("NT_SERVER_ADDR")
 if None == nt_server_addr:
     nt_server_addr = "10.41.21.2"
@@ -52,14 +57,12 @@ visionFile = team4121home + "/config/" + team4121config + "/VisionSettings.txt"
 cameraValues = {}
 
 # Define program control flags
-if team4121visiontest.lower() in ["true", "1", "t", "y", "yes"]:
-    videoTesting = True
-else:
-    videoTesting = False
+videoTesting = team4121visiontest.lower() in ["true", "1", "t", "y", "yes"]
+syncCamera = team4121camerasync.lower() in ["true", "1", "t", "y", "yes"]
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
-syncCamera = True
+syncCamera = False
 startupSleep = 0
 
 if getenv("DISPLAY") is None:  # We're on the robot, do stuff for realsies
