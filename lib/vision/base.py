@@ -80,6 +80,7 @@ class VisionBase:
     # Class Initialization method
     # Reads the contents of the supplied vision settings file
     def __init__(self):
+        self.name = "DUMMY"
         self.data = []
         self.isFinished = 0
 

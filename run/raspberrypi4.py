@@ -268,7 +268,8 @@ class CameraLoop:
             table = nt.getTable(table)
         
         self.callback = CameraCallback(table, self.cam)
-        self.libs = (RingVisionLibrary(), AprilTagVisionLibrary())
+        # self.libs = (RingVisionLibrary(), AprilTagVisionLibrary())
+        self.libs = [VisionBase()] * 2
 
     def launch_loop(self) -> KillableThread:
         self.thread = self.cam.launch_libs_loop(*self.libs, callback=self.callback)
@@ -399,7 +400,12 @@ if __name__ == "__main__":
         stop = True
 
     import signal
+    import gc
 
     signal.signal(signal.SIGUSR1, stopit)
     signal.signal(signal.SIGINT, stopit)
+    
+    gc.set_threshold(10000, 100, 100)
+    gc.disable()
+
     main()
