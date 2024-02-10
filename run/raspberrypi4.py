@@ -90,8 +90,9 @@ stop = False
 
 
 class CameraCallback:
-    def __init__(self, table):
+    def __init__(self, table, cam):
         self.table = table
+        self.cam = cam
         self.frame = np.zeros((480, 640, 3))
         self.frames = 0
         self.minFps = 100
@@ -236,6 +237,8 @@ class CameraCallback:
                 )
                 self.table.putNumber(f"Tags.{i}.id", unwrap_or(tags[i].ident, -9999.0))
 
+            self.cam.enabled = self.table.getBoolean("Enabled")
+
         done += 1
         self.frames += 1
 
@@ -254,21 +257,17 @@ class CameraLoop:
                 videofile = f"{name}_{timeString}"
             else:
                 videofile = None
-        if type(csname) is bool:
-            if csname:
-                csname = name.lower()
-            else:
-                csname = None
-
+        
+        self.name = name
+        self.cam = CameraBase.init_cam(name, timeString, videofile, csname, profile)
+        
         if table is None:
-            table = name.lower()
+            table = self.cam.get_config("NTNAME", self.cam.name.lower())
 
         if type(table) is str:
             table = nt.getTable(table)
-
-        self.name = name
-        self.cam = CameraBase.init_cam(name, timeString, videofile, csname, profile)
-        self.callback = CameraCallback(table)
+        
+        self.callback = CameraCallback(table, self.cam)
         self.libs = (RingVisionLibrary(), AprilTagVisionLibrary())
 
     def launch_loop(self) -> KillableThread:
@@ -329,7 +328,7 @@ def main():
             else "Failed to connect to table\n"
         )
 
-        cams = [CameraLoop("USB1"), CameraLoop("USB2")]
+        cams = [CameraLoop("INTAKE"), CameraLoop("SHOOTER")]
         # cams = [CameraLoop("DUMMY")]
         threads = []
 

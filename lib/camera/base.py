@@ -73,13 +73,13 @@ class CameraBase:
         name: str,
         timestamp: str,
         videofile: Optional[str] = None,
-        csname: Optional[str] = None,
+        csname: str | bool = False,
         profile: bool = False,
-        enabled: bool = True
+        enabled: bool = True,
     ):
         self.enabled = enabled
         if not CameraBase.stream:
-            csname = None
+            csname = False
         if not CameraBase.save:
             videofile = None
         self.profile = profile
@@ -158,7 +158,10 @@ class CameraBase:
         #    self.distort_coeffs = np.loadtxt(cam_coeffs_file)
         #    self.undistort_img = True
 
-        if csname is not None:
+        if type(csname) is bool and csname:
+            csname = self.get_config("NTNAME", self.name.lower())
+
+        if csname is not False:
             load_cscore()
             self.cvs = CvSource(
                 csname,
@@ -169,6 +172,14 @@ class CameraBase:
             )
         else:
             self.cvs = None
+
+        pipes = self.get_config("VLIBS", "!")
+        if len(pipes) > 0 and pipes[0] == "!":
+            self.blacklist = True
+            pipes = pipes[1:]
+        else:
+            self.blacklist = False
+        self.pipes = {s.strip() for s in pipes.split(",")}
 
     @staticmethod
     def read_config_file(file, reload: bool = False) -> bool:
@@ -374,6 +385,7 @@ class CameraBase:
                 {
                     lib.name: lib.find_objects(frame, self.width, self.height, self.fov)
                     for lib in libs
+                    if (lib.name in self.pipes) != self.blacklist
                 },
             )
         else:
