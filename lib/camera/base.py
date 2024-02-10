@@ -368,13 +368,13 @@ class CameraBase:
 
     def _use_libs_fn(self, callback, *libs):
         args = self.use_libs(*libs)
-        if self.grabbed:
+        if self.grabbed or not self.enabled:
             callback(*args)
 
     def _loop_libs_fn(self, callback, *libs):
         while True:
             args = self.use_libs(*libs)
-            if self.grabbed:
+            if self.grabbed or not self.enabled:
                 callback(*args)
 
     def _loop_libs_fn_profile(self, callback, *libs):
@@ -412,7 +412,7 @@ class CameraBase:
     # Made to easily switch with `use_libs_async`
     def use_libs_sync(self, *libs, callback=lambda _: None):
         args = self.use_libs(*libs)
-        if self.grabbed:
+        if self.grabbed or not self.enabled:
             return callback(*args)
 
     # Apply vision processors to a single frame, running in another thread
