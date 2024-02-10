@@ -298,95 +298,98 @@ def main():
         os.unlink(linkPath)
     os.symlink("log_" + timeString + ".txt", linkPath)
     with open(logFilename, "w") as log_file:
-        log_file.write("Run started on {}.\n".format(datetime.datetime.now()))
-        log_file.write("")
-        controlTable = None
-
-        # Connect NetworkTables
         try:
-            if networkTablesConnected:
-                nt.setServer(nt_server_addr)
-                nt.startClient3("pi4")
-                controlTable = nt.getTable("control")
+            log_file.write("Run started on {}.\n".format(datetime.datetime.now()))
+            log_file.write("")
+            controlTable = None
 
-                log_file.write(
-                    "Connected to Networktables on {} \n".format(nt_server_addr)
-                )
+            # Connect NetworkTables
+            try:
+                if networkTablesConnected:
+                    nt.setServer(nt_server_addr)
+                    nt.startClient3("pi4")
+                    controlTable = nt.getTable("control")
 
-                controlTable.putNumber("RobotStop", 0)
+                    log_file.write(
+                        "Connected to Networktables on {} \n".format(nt_server_addr)
+                    )
 
-                timeString = controlTable.getString("Time", timeString)
+                    controlTable.putNumber("RobotStop", 0)
 
-                # networkTablesConnected = nt.isConnected()
-        except Exception as e:
-            log_file.write("Error:  Unable to connect to Network tables.\n")
-            log_file.write("Error message: {}\n".format(e))
+                    timeString = controlTable.getString("Time", timeString)
 
-        log_file.write(
-            "connected to table\n"
-            if nt.isConnected()
-            else "Failed to connect to table\n"
-        )
+                    # networkTablesConnected = nt.isConnected()
+            except Exception as e:
+                log_file.write("Error:  Unable to connect to Network tables.\n")
+                log_file.write("Error message: {}\n".format(e))
 
-        cams = [CameraLoop("INTAKE"), CameraLoop("SHOOTER")]
-        # cams = [CameraLoop("DUMMY")]
-        threads = []
-
-        # post-initializer call, this MUST happen
-        for cam in cams:
-            cam.cam.post_init()
-
-        if not syncCamera:
-            threads = [cam.launch_loop() for cam in cams]
-        start = time.monotonic()
-        # Start main processing loop
-        while not stop:
-            if videoTesting:
-                for cam in cams:
-                    cam.update_video()
-
-            #################################
-            # Check for stopping conditions #
-            #################################
-
-            # Check for stop code from keyboard (for testing)
-            if videoTesting and cv.waitKey(1) == 27:
-                break
-
-            # Check for stop code from network tables
-            if nt.isConnected():
-                robotStop = controlTable.getNumber("RobotStop", 0)
-                if robotStop == 1 or not networkTablesConnected:
-                    break
-
-            if syncCamera:
-                for cam in cams:
-                    cam.cam_tick_sync()
-
-            if not (syncCamera or videoTesting or networkTablesConnected):
-                time.sleep(0.0001)
-        end = time.monotonic()
-
-        for cam in cams:
             log_file.write(
-                "Average FPS for {}: {:5.2f}/{:5.2f}/{:5.2f}/{:5.2f}\n".format(
-                    cam.name,
-                    cam.callback.frames / (end - start),
-                    cam.callback.avgFps,
-                    cam.callback.minFps,
-                    cam.callback.maxFps,
-                )
+                "connected to table\n"
+                if nt.isConnected()
+                else "Failed to connect to table\n"
             )
 
-        # Close all open windows (for testing)
-        if videoTesting:
-            cv.destroyAllWindows()
+            cams = [CameraLoop("INTAKE"), CameraLoop("SHOOTER")]
+            # cams = [CameraLoop("DUMMY")]
+            threads = []
 
-        for thread in threads:
-            thread.kill()
+            # post-initializer call, this MUST happen
+            for cam in cams:
+                cam.cam.post_init()
 
-        # Close the log file
-        log_file.write("Run stopped on {}.\n".format(datetime.datetime.now()))
+            if not syncCamera:
+                threads = [cam.launch_loop() for cam in cams]
+            start = time.monotonic()
+            # Start main processing loop
+            while not stop:
+                if videoTesting:
+                    for cam in cams:
+                        cam.update_video()
+
+                #################################
+                # Check for stopping conditions #
+                #################################
+
+                # Check for stop code from keyboard (for testing)
+                if videoTesting and cv.waitKey(1) == 27:
+                    break
+
+                # Check for stop code from network tables
+                if nt.isConnected():
+                    robotStop = controlTable.getNumber("RobotStop", 0)
+                    if robotStop == 1 or not networkTablesConnected:
+                        break
+
+                if syncCamera:
+                    for cam in cams:
+                        cam.cam_tick_sync()
+
+                if not (syncCamera or videoTesting or networkTablesConnected):
+                    time.sleep(0.0001)
+            end = time.monotonic()
+
+            for cam in cams:
+                log_file.write(
+                    "Average FPS for {}: {:5.2f}/{:5.2f}/{:5.2f}/{:5.2f}\n".format(
+                        cam.name,
+                        cam.callback.frames / (end - start),
+                        cam.callback.avgFps,
+                        cam.callback.minFps,
+                        cam.callback.maxFps,
+                    )
+                )
+
+            # Close all open windows (for testing)
+            if videoTesting:
+                cv.destroyAllWindows()
+
+            for thread in threads:
+                thread.kill()
+
+            # Close the log file
+            log_file.write("Run stopped on {}.\n".format(datetime.datetime.now()))
+        except Exception as e:
+            log_file.write(f"An exception occured: {e}\n")
 
 
 if __name__ == "__main__":

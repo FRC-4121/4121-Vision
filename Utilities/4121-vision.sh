@@ -6,6 +6,9 @@
 #     cd /etc/rc5.d
 #     sudo ln -s ../init.d/4121-vision.sh S024121-vision
 #     sudo ln -s ../init.d/4121-vision.sh K024121-vision
+#     cd /etc/rc3.d
+#     sudo ln -s ../init.d/4121-vision.sh S024121-vision
+#     sudo ln -s ../init.d/4121-vision.sh K024121-vision
 
 . /lib/lsb/init-functions
 
