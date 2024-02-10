@@ -270,7 +270,7 @@ class CameraBase:
         if name in cfg:
             return cfg[name]
         return default
-    
+
     # Grab a frame from the camera, possibly with some preprocessing
     # post_init MUST be called first!
     def read_frame(self) -> np.ndarray:
@@ -357,11 +357,13 @@ class CameraBase:
                 return (
                     frame,
                     {
-                        lib.name: lib.find_objects(frame, self.width, self.height, self.fov)
+                        lib.name: lib.find_objects(
+                            frame, self.width, self.height, self.fov
+                        )
                         for lib in libs
                         if (lib.name in self.pipes) != self.blacklist
                     },
-                ) 
+                )
         return (self.frame, dict())
 
     def _use_libs_fn(self, callback, *libs):

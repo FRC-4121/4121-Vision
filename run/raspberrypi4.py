@@ -36,7 +36,7 @@ from typing import *
 import numpy as np
 
 # Team 4121 module imports
-import camera.picam
+# import camera.picam
 import camera.frame
 import camera.usb
 from camera.base import CameraBase
@@ -87,6 +87,25 @@ def unwrap_or(val, default):
 
 done = 0
 stop = False
+
+
+class PollerFn:
+    def __init__(self, call: Callable[[], Any], maxCount: int = 50):
+        self.ret = call()
+        self.call = call
+        self.count = 0
+        self.maxCount = maxCount
+
+    def __call__(self):
+        if self.count >= self.maxCount:
+            self.ret = self.call()
+            self.count = 0
+            return self.ret
+        self.count += 1
+        return self.ret
+
+
+ntIsConnected = PollerFn(lambda: nt.isConnected())
 
 
 class CameraCallback:
@@ -208,7 +227,7 @@ class CameraCallback:
 
         self.frame = frame
 
-        if nt.isConnected():
+        if ntIsConnected():
             self.table.putNumber("FPS", fieldFps)
 
             self.table.putNumber("RingsFound", len(rings))
@@ -257,16 +276,16 @@ class CameraLoop:
                 videofile = f"{name}_{timeString}"
             else:
                 videofile = None
-        
+
         self.name = name
         self.cam = CameraBase.init_cam(name, timeString, videofile, csname, profile)
-        
+
         if table is None:
             table = self.cam.get_config("NTNAME", self.cam.name.lower())
 
         if type(table) is str:
             table = nt.getTable(table)
-        
+
         self.callback = CameraCallback(table, self.cam)
         # self.libs = (RingVisionLibrary(), AprilTagVisionLibrary())
         self.libs = [VisionBase()] * 2
@@ -319,17 +338,22 @@ def main():
 
                     timeString = controlTable.getString("Time", timeString)
 
-                    # networkTablesConnected = nt.isConnected()
+                    # networkTablesConnected = ntIsConnected()
             except Exception as e:
                 log_file.write("Error:  Unable to connect to Network tables.\n")
                 log_file.write("Error message: {}\n".format(e))
 
             log_file.write(
                 "connected to table\n"
-                if nt.isConnected()
+                if ntIsConnected()
                 else "Failed to connect to table\n"
             )
 
+            def checkStop():
+                if ntIsConnected() and controlTable.getNumber("RobotStop", 0) == 1:
+                    stop = True
+
+            checkStop = PollerFn(checkStop)
             cams = [CameraLoop("INTAKE"), CameraLoop("SHOOTER")]
             # cams = [CameraLoop("DUMMY")]
             threads = []
@@ -356,10 +380,7 @@ def main():
                     break
 
                 # Check for stop code from network tables
-                if nt.isConnected():
-                    robotStop = controlTable.getNumber("RobotStop", 0)
-                    if robotStop == 1 or not networkTablesConnected:
-                        break
+                checkStop()
 
                 if syncCamera:
                     for cam in cams:
@@ -404,7 +425,7 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGUSR1, stopit)
     signal.signal(signal.SIGINT, stopit)
-    
+
     gc.set_threshold(10000, 100, 100)
     gc.disable()
 
