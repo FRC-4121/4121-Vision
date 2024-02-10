@@ -52,7 +52,7 @@ visionFile = team4121home + "/config/" + team4121config + "/VisionSettings.txt"
 cameraValues = {}
 
 # Define program control flags
-if team4121visiontest.lower() in ['true', '1', 't', 'y', 'yes']:
+if team4121visiontest.lower() in ["true", "1", "t", "y", "yes"]:
     videoTesting = True
 else:
     videoTesting = False
@@ -99,9 +99,7 @@ class CameraCallback:
         self.avgFps = 0
         self.lastTime = time.monotonic()
 
-    def __call__(
-        self, frame: np.ndarray, rings: List[FoundObject], tags: List[FoundObject]
-    ):
+    def __call__(self, frame: np.ndarray, res: Dict[str, List[FoundObject]]):
         global done
         fieldTime = time.monotonic()
         fieldFps = 1 / (fieldTime - self.lastTime)
@@ -113,6 +111,8 @@ class CameraCallback:
             self.minFps = fieldFps
         if self.frames < 15 and fieldFps > self.maxFps:
             self.maxFps = fieldFps
+        rings = res["RING"] if "RING" in res else []
+        tags = res["APRIL"] if "APRIL" in res else []
         if videoTesting:
             cv.putText(
                 frame,

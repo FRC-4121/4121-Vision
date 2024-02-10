@@ -364,14 +364,14 @@ class CameraBase:
         self.log_file.close()
 
     # Apply vision processors to a single frame
-    def use_libs(self, *libs) -> List[Any]:
+    def use_libs(self, *libs) -> Tuple[np.ndarray, dict]:
         frame = self.read_frame()
         return (
             frame,
-            *[
-                lib.find_objects(frame, self.width, self.height, self.fov)
+            {
+                lib.name: lib.find_objects(frame, self.width, self.height, self.fov)
                 for lib in libs
-            ],
+            },
         )
 
     def _use_libs_fn(self, callback, *libs):
