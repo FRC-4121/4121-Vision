@@ -59,7 +59,7 @@ else:
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
-syncCamera = False
+syncCamera = True
 startupSleep = 0
 
 if getenv("DISPLAY") is None:  # We're on the robot, do stuff for realsies

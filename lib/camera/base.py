@@ -134,6 +134,7 @@ class CameraBase:
 
         # Initialize blank frames
         self.frame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
+        self.frame.fill(128)
 
         self.grabbed = True
 
@@ -269,48 +270,23 @@ class CameraBase:
         if name in cfg:
             return cfg[name]
         return default
-
-    # Run camera updates in another thread
-    def start_camera_thread(self):
-        self.stopped = False
-        camThread = KillableThread(target=self._run_in_thread, name=self.name, args=())
-        camThread.daemon = True
-        camThread.start()
-
-        return self
-
-    # Send signal to stop
-    def stop_camera_thread(self) -> None:
-        self.stopped = True
-
-    # Run self in other thread. Not to be called directly
-    def _run_in_thread(self) -> None:
-        # Main thread loop
-        while True:
-            # Check stop flag
-            if self.stopped:
-                return
-
-            # If not stopping, grab new frame
-            self.grabbed, self.frame = self.camStream.read()
-
+    
     # Grab a frame from the camera, possibly with some preprocessing
     # post_init MUST be called first!
     def read_frame(self) -> np.ndarray:
         # Declare frame for undistorted image
-        newFrame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
+        # newFrame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
 
         try:
             # Grab new frame
             self.grabbed, frame = self.read_frame_raw()
 
             if not self.grabbed:
-                newFrame.fill(128)
-                return newFrame
-
+                return self.frame
+            self.frame = frame
             # Undistort image
             if self.undistort_img == True:
-                h, w = frame.shape[:2]
+                h, w = self.frame.shape[:2]
                 new_matrix, roi = cv.getOptimalNewCameraMatrix(
                     self.cam_matrix, self.distort_coeffs, (w, h), 1, (w, h)
                 )
@@ -318,10 +294,7 @@ class CameraBase:
                     frame, self.cam_matrix, self.distort_coeffs, None, new_matrix
                 )
                 x, y, w, h = roi
-                newFrame = newFrame[y : y + h, x : x + w]
-
-            else:
-                newFrame = frame
+                self.frame = self.frame[y : y + h, x : x + w]
 
         except Exception as read_error:
             # Write error to log
@@ -334,13 +307,13 @@ class CameraBase:
         if self.cvs is not None:
             self.cvs.putFrame(
                 cv.resize(
-                    newFrame,
+                    self.frame,
                     (self.width // self.streamRes, self.height // self.streamRes),
                 )
             )
 
         # Return the most recent frame
-        return newFrame
+        return self.frame
 
     # Write a frame to the video file
     def write_video(self, img: np.ndarray) -> bool:
@@ -380,58 +353,65 @@ class CameraBase:
     def use_libs(self, *libs) -> Tuple[np.ndarray, dict]:
         if self.enabled:
             frame = self.read_frame()
-            return (
-                frame,
-                {
-                    lib.name: lib.find_objects(frame, self.width, self.height, self.fov)
-                    for lib in libs
-                    if (lib.name in self.pipes) != self.blacklist
-                },
-            )
-        else:
-            newFrame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
-            newFrame.fill(128)
-            return (newFrame, dict())
+            if self.grabbed:
+                return (
+                    frame,
+                    {
+                        lib.name: lib.find_objects(frame, self.width, self.height, self.fov)
+                        for lib in libs
+                        if (lib.name in self.pipes) != self.blacklist
+                    },
+                ) 
+        return (self.frame, dict())
 
     def _use_libs_fn(self, callback, *libs):
-        callback(*self.use_libs(*libs))
+        args = self.use_libs(*libs)
+        if self.grabbed:
+            callback(*args)
 
     def _loop_libs_fn(self, callback, *libs):
         while True:
-            callback(*self.use_libs(*libs))
+            args = self.use_libs(*libs)
+            if self.grabbed:
+                callback(*args)
 
     def _loop_libs_fn_profile(self, callback, *libs):
-        frame = None
+        self._loop_libs_fn(callback, *libs)
+        # TODO: make this work with new callback code
+        # frame = None
 
-        def time_find(lib):
-            start = time.monotonic()
-            ret = lib.find_objects(frame, self.width, self.height, self.fov)
-            end = time.monotonic()
-            return str(end - start), ret
+        # def time_find(lib):
+        #     start = time.monotonic()
+        #     ret = lib.find_objects(frame, self.width, self.height, self.fov)
+        #     end = time.monotonic()
+        #     return str(end - start), ret
 
-        with open(f"{team4121home}/logs/{self.name}_profile.csv", "w+") as f:
-            f.write("total,cam,vision,callback,{}\n".format(",".join(map(str, libs))))
-            while True:
-                t0 = time.monotonic()
-                frame = self.read_frame()
-                t1 = time.monotonic()
-                times, objs = tuple(map(list, zip(*map(time_find, libs))))
-                args = (frame, *objs)
-                t2 = time.monotonic()
-                callback(*args)
-                t3 = time.monotonic()
-                f.write(
-                    ",".join(
-                        [str(t3 - t0), str(t1 - t0), str(t2 - t1), str(t3 - t2), *times]
-                    )
-                    + "\n"
-                )
-                f.flush()
+        # with open(f"{team4121home}/logs/{self.name}_profile.csv", "w+") as f:
+        #     f.write("total,cam,vision,callback,{}\n".format(",".join(map(str, libs))))
+        #     while True:
+        #         t0 = time.monotonic()
+        #         frame = self.read_frame()
+        #         t1 = time.monotonic()
+        #         times, objs = tuple(map(list, zip(*map(time_find, libs))))
+        #         args = (frame, *objs)
+        #         t2 = time.monotonic()
+        #         if self.grabbed:
+        #             callback(*args)
+        #         t3 = time.monotonic()
+        #         f.write(
+        #             ",".join(
+        #                 [str(t3 - t0), str(t1 - t0), str(t2 - t1), str(t3 - t2), *times]
+        #             )
+        #             + "\n"
+        #         )
+        #         f.flush()
 
     # Apply vision processors to a single frame, with a callback.
     # Made to easily switch with `use_libs_async`
     def use_libs_sync(self, *libs, callback=lambda _: None):
-        return callback(*self.use_libs(*libs))
+        args = self.use_libs(*libs)
+        if self.grabbed:
+            return callback(*args)
 
     # Apply vision processors to a single frame, running in another thread
     def use_libs_async(
