@@ -75,7 +75,9 @@ class CameraBase:
         videofile: Optional[str] = None,
         csname: Optional[str] = None,
         profile: bool = False,
+        enabled: bool = True
     ):
+        self.enabled = enabled
         if not CameraBase.stream:
             csname = None
         if not CameraBase.save:
@@ -365,14 +367,19 @@ class CameraBase:
 
     # Apply vision processors to a single frame
     def use_libs(self, *libs) -> Tuple[np.ndarray, dict]:
-        frame = self.read_frame()
-        return (
-            frame,
-            {
-                lib.name: lib.find_objects(frame, self.width, self.height, self.fov)
-                for lib in libs
-            },
-        )
+        if self.enabled:
+            frame = self.read_frame()
+            return (
+                frame,
+                {
+                    lib.name: lib.find_objects(frame, self.width, self.height, self.fov)
+                    for lib in libs
+                },
+            )
+        else:
+            newFrame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
+            newFrame.fill(128)
+            return (newFrame, dict())
 
     def _use_libs_fn(self, callback, *libs):
         callback(*self.use_libs(*libs))
