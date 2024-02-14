@@ -420,6 +420,7 @@ def main():
             for cam in cams:
                 cam.cam.log_file.close()
 
+
 if __name__ == "__main__":
 
     def stopit(*args):

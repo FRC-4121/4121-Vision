@@ -51,14 +51,22 @@ class UsbCamera(CameraBase):
         if port is not None:
             port = find_cams(port)
         if port is None:
-            self.device_id = self.get_config("ID", "0")
+            self.device_id = self.get_config("ID", None)
             self.device_id = (
-                int(self.device_id) if self.device_id.isnumeric() else self.device_id
+                int(self.device_id)
+                if self.device_id is not None and self.device_id.isnumeric()
+                else self.device_id
             )
         else:
             self.device_id = port
+
         super().__init__(name, timestamp, videofile, csname, profile)
 
+        if self.device_id is None:
+            self.log_file.write("Can't find camera, either by PORT or ID!\n")
+            self.log_file.flush()
+            self.evenTry = False
+            return
         self.camStream = cv.VideoCapture(self.device_id)
         self.camStream.setExceptionMode(True)
         try:
@@ -87,10 +95,11 @@ class UsbCamera(CameraBase):
             self.evenTry = False
 
     def post_init(self):
-        try:
-            self.camStream.set(cv.CAP_PROP_FPS, self.fps)
-        except cv.error as e:
-            self.log_file.write(f"Error during post-init: {e}\n")
+        if self.evenTry:
+            try:
+                self.camStream.set(cv.CAP_PROP_FPS, self.fps)
+            except cv.error as e:
+                self.log_file.write(f"Error during post-init: {e}\n")
 
     def read_frame_raw(self) -> (bool, np.ndarray):
         if not self.evenTry:
