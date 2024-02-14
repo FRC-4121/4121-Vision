@@ -350,7 +350,7 @@ class CameraBase:
         self.log_file.close()
 
     # Apply vision processors to a single frame
-    def use_libs(self, *libs) -> Tuple[np.ndarray, dict]:
+    def use_libs(self, *libs, sleep_if_fail: float = 0.0) -> Tuple[np.ndarray, dict]:
         if self.enabled:
             frame = self.read_frame()
             if self.grabbed:
@@ -364,6 +364,7 @@ class CameraBase:
                         if (lib.name in self.pipes) != self.blacklist
                     },
                 )
+        time.sleep(sleep_if_fail)
         return (self.frame, dict())
 
     def _use_libs_fn(self, callback, *libs):
@@ -373,7 +374,7 @@ class CameraBase:
 
     def _loop_libs_fn(self, callback, *libs):
         while True:
-            args = self.use_libs(*libs)
+            args = self.use_libs(*libs, sleep_if_fail=0.01)
             if self.grabbed or not self.enabled:
                 callback(*args)
 
