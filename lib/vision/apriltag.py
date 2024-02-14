@@ -2,6 +2,12 @@ from vision.base import *
 from threads import get_tls
 import pyapriltags
 
+corners = np.array(
+    [[-3.25, +3.25, 0], [+3.25, +3.25, 0], [+3.25, -3.25, 0], [-3.25, -3.25, 0]]
+)
+
+camMat = np.array([[840, 0, 320], [0, 840, 240], [0, 0, 1]])
+
 
 def cvt_res(
     r: pyapriltags.Detection, cameraWidth: int, cameraHeight: int, cameraFOV: float
@@ -27,7 +33,15 @@ def cvt_res(
         cameraHeight,
         cameraFOV,
     )
-    # obj.distance = math.sqrt(np.sum(np.square(r.pose_t)))
+
+    good, _, pose_t = cv.solvePnP(
+        corners, r.corners, camMat, None, flags=cv.SOLVEPNP_IPPE_SQUARE
+    )
+
+    if good:
+        dist = math.sqrt(np.sum(np.square(pose_t)))
+        dist -= dist // 30  # trust me bro
+        obj.distance = dist
     return obj
 
 

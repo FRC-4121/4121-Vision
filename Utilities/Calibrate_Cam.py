@@ -30,11 +30,14 @@ team4121home = os.environ.get("TEAM4121HOME")
 if None == team4121home:
     team4121home = os.getcwd()
 
+team4121cfg = os.environ.get("TEAM4121CONFIG")
+if None == team4121cfg:
+    team4121cfg = "2024"
 # Set general variables
 # calibration_dir = 'C:/Users/timfu/Documents/FRC General/Camera'
 # working_dir = 'C:/Users/timfu/Documents/FRC General/Camera/Calibration_Images'
-calibration_dir = team4121home + "/config"
-working_dir = "/home/pi/Calibration_Images"
+calibration_dir = team4121home + "/config/" + team4121cfg
+working_dir = team4121home + "/config/" + team4121cfg
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # Set image variables
