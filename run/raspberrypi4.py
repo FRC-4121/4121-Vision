@@ -62,7 +62,6 @@ syncCamera = team4121camerasync.lower() in ["true", "1", "t", "y", "yes"]
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
-syncCamera = False
 startupSleep = 0
 
 if getenv("DISPLAY") is None:  # We're on the robot, do stuff for realsies
@@ -290,8 +289,8 @@ class CameraLoop:
             table = nt.getTable(table)
 
         self.callback = CameraCallback(table, self.cam)
-        # self.libs = (RingVisionLibrary(), AprilTagVisionLibrary())
-        self.libs = [VisionBase()] * 2
+        self.libs = (RingVisionLibrary(), AprilTagVisionLibrary())
+        # self.libs = [VisionBase()] * 2
 
     def launch_loop(self) -> KillableThread:
         self.thread = self.cam.launch_libs_loop(*self.libs, callback=self.callback)
@@ -321,6 +320,7 @@ def main():
         os.unlink(linkPath)
     os.symlink("log_" + timeString + ".txt", linkPath)
     with open(logFilename, "w") as log_file:
+        cams = []
         try:
             log_file.write("Run started on {}.\n".format(datetime.datetime.now()))
             log_file.write("")
@@ -352,12 +352,13 @@ def main():
                 else "Failed to connect to table\n"
             )
 
-            def checkStop():
+            def checkStopFn():
                 if ntIsConnected() and controlTable.getNumber("RobotStop", 0) == 1:
                     stop = True
 
-            checkStop = PollerFn(checkStop)
+            checkStop = PollerFn(checkStopFn)
             cams = [CameraLoop("INTAKE"), CameraLoop("SHOOTER")]
+            # cams = [CameraLoop("INTAKE")]
             # cams = [CameraLoop("DUMMY")]
             threads = []
 
@@ -389,8 +390,8 @@ def main():
                     for cam in cams:
                         cam.cam_tick_sync()
 
-                if not (syncCamera or videoTesting or networkTablesConnected):
-                    time.sleep(0.0001)
+                if not (syncCamera or videoTesting):
+                    time.sleep(0.01)
             end = time.monotonic()
 
             for cam in cams:
@@ -415,7 +416,9 @@ def main():
             log_file.write("Run stopped on {}.\n".format(datetime.datetime.now()))
         except Exception as e:
             log_file.write(f"An exception occured: {e}\n")
-
+        finally:
+            for cam in cams:
+                cam.cam.log_file.close()
 
 if __name__ == "__main__":
 

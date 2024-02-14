@@ -38,6 +38,9 @@ STATUS=0
 
 case "$1" in
   start)
+    # Only works with logitech!!!
+    v4l2-ctl -d /dev/video0 -c auto_exposure=1
+    v4l2-ctl -d /dev/video0 -c exposure_time_absolute=300
     start-stop-daemon --start --pidfile $PIDFILE --make-pidfile --background --exec ${TEAM4121HOME}/run/raspberrypi4.py
 	  STATUS=$?
 	  if [ $STATUS != 0 ]; then
