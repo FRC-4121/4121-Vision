@@ -161,7 +161,7 @@ class CameraCallback:
                     (ring.x + 10, ring.y + 15),
                     cv.FONT_HERSHEY_SIMPLEX,
                     0.3,
-                    (0, 0, 0),
+                    (0, 255, 0),
                     1,
                 )
                 cv.putText(
@@ -170,7 +170,7 @@ class CameraCallback:
                     (ring.x + 10, ring.y + 30),
                     cv.FONT_HERSHEY_SIMPLEX,
                     0.3,
-                    (0, 0, 0),
+                    (0, 255, 0),
                     1,
                 )
                 cv.putText(
@@ -179,7 +179,7 @@ class CameraCallback:
                     (ring.x + 10, ring.y + 45),
                     cv.FONT_HERSHEY_SIMPLEX,
                     0.3,
-                    (0, 0, 0),
+                    (0, 255, 0),
                     1,
                 )
             for tag in tags:
