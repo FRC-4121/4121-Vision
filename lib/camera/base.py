@@ -71,6 +71,7 @@ class CameraBase:
         timestamp: str,
         csname: str | bool = False,
         profile: bool = False,
+        videofile: str | bool = True,
         enabled: bool = True,
     ):
         self.enabled = enabled
@@ -103,29 +104,41 @@ class CameraBase:
         self.streamRes = int(self.get_config("STREAM_RES", 1))
 
         # Set up video writer
-        self.videoFilename = "{}/{}_{}.avi".format(team4121videos, name, timestamp)
-        fourcc = cv.VideoWriter_fourcc(*"MJPG")
-        self.camWriter = cv.VideoWriter(
-            self.videoFilename, fourcc, self.fps, (self.width, self.height)
-        )
-
-        try:
-            self.camWriter.open(
-                self.videoFilename,
-                fourcc,
-                float(self.fps),
-                (self.width, self.height),
-                True,
-            )
-        except Exception as e:
-            self.log_file.write(
-                "Error opening video writer for {}\n{}\n".format(self.videoFilename, e)
-            )
-
-        if self.camWriter.isOpened():
-            self.log_file.write("Video writer is open\n")
+        if type(videofile) is bool:
+            if videofile:
+                self.videoFilename = "{}/{}.avi".format(team4121videos, name, timestamp)
+            else:
+                self.videoFilename = None
         else:
-            self.log_file.write("Video writer is NOT open\n")
+            self.videoFilename = videofile
+
+        if self.videoFilename is None:
+            self.camWriter = None
+        else:
+            fourcc = cv.VideoWriter_fourcc(*"MJPG")
+            self.camWriter = cv.VideoWriter(
+                self.videoFilename, fourcc, self.fps, (self.width, self.height)
+            )
+
+            try:
+                self.camWriter.open(
+                    self.videoFilename,
+                    fourcc,
+                    float(self.fps),
+                    (self.width, self.height),
+                    True,
+                )
+            except Exception as e:
+                self.log_file.write(
+                    "Error opening video writer for {}\n{}\n".format(self.videoFilename, e)
+                )
+
+            if self.camWriter.isOpened():
+                self.saveVideo = True
+                self.log_file.write("Video writer is open\n")
+            else:
+                self.saveVideo = False
+                self.log_file.write("Video writer is NOT open\n")
 
         # Initialize blank frames
         self.frame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
@@ -225,6 +238,7 @@ class CameraBase:
         name: str,
         timestamp: str,
         csname: Optional[str] = None,
+        videofile: str | bool = True,
         profile: bool = False,
     ):
         ty = None
@@ -240,7 +254,7 @@ class CameraBase:
         if ty is None:
             raise KeyError("camera type not specified!")
 
-        return ty(name, timestamp, csname, profile)
+        return ty(name, timestamp, csname, videofile, profile)
 
     # Override point for camera
     def read_frame_raw(self) -> (bool, np.ndarray):
@@ -309,7 +323,7 @@ class CameraBase:
     # Write a frame to the video file
     def write_video(self, img: np.ndarray) -> bool:
         # Check if write is opened
-        if self.camWriter.isOpened():
+        if self.camWriter is not None and self.camWriter.isOpened():
             # Write the image
             try:
                 self.camWriter.write(img)

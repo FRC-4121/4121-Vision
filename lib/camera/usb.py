@@ -43,6 +43,7 @@ class UsbCamera(CameraBase):
         name: str,
         timestamp: str,
         csname: Optional[str] = None,
+        videofile: str | bool = True,
         profile: bool = False,
     ):
         self.name = name
@@ -59,7 +60,7 @@ class UsbCamera(CameraBase):
         else:
             self.device_id = port
 
-        super().__init__(name, timestamp, csname, profile)
+        super().__init__(name, timestamp, csname, videofile, profile)
 
         if self.device_id is None:
             self.log_file.write("Can't find camera, either by PORT or ID!\n")

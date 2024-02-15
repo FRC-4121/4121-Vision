@@ -15,6 +15,7 @@ team4121config = os.getenv("TEAM4121CONFIG", "2024")
 team4121logs = os.getenv("TEAM4121LOGS", team4121home + "/logs")
 team4121visiontest = os.getenv("TEAM4121VISIONTEST", "True")
 team4121camerasync = os.getenv("TEAM4121CAMERASYNC", "False")
+team4121videosave = os.getenv("TEAM4121VIDEOSAVE", "True")
 nt_server_addr = os.getenv("NT_SERVER_ADDR", "10.41.21,2")
 
 # Setup paths
@@ -51,6 +52,7 @@ cameraValues = {}
 # Define program control flags
 videoTesting = team4121visiontest.lower() in ["true", "1", "t", "y", "yes"]
 syncCamera = team4121camerasync.lower() in ["true", "1", "t", "y", "yes"]
+saveVideo = team4121videosave.lower() in ["true", "1", "t", "y", "yes"]
 resizeVideo = False
 saveVideo = False
 networkTablesConnected = True
@@ -252,10 +254,11 @@ class CameraLoop:
         name: str,
         table: ntcore.NetworkTable | str | None = None,
         csname: str | bool = False,
+        videofile: bool = saveVideo,
         profile: bool = False,
     ):
         self.name = name
-        self.cam = CameraBase.init_cam(name, timeString, csname, profile)
+        self.cam = CameraBase.init_cam(name, timeString, csname, videofile, profile)
 
         if table is None:
             table = self.cam.get_config("NTNAME", self.cam.name.lower())
@@ -307,10 +310,6 @@ def main():
                     nt.setServer(nt_server_addr)
                     nt.startClient3("pi4")
                     controlTable = nt.getTable("control")
-
-                    log_file.write(
-                        "Connected to Networktables on {} \n".format(nt_server_addr)
-                    )
 
                     controlTable.putNumber("RobotStop", 0)
 
@@ -388,7 +387,7 @@ def main():
 
             for thread in threads:
                 thread.join(0.1)
-                if thread.isRunning():
+                if thread.is_alive():
                     log_file.write(f"thread {thread.name}({thread.ident}) still running after sent kill command\n")
 
             for cam in cams:
