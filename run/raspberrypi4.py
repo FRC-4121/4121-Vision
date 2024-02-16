@@ -98,8 +98,8 @@ class PollerFn:
         self.count = 0
         self.maxCount = maxCount
 
-    def __call__(self):
-        if self.count >= self.maxCount:
+    def __call__(self, force = False):
+        if force or self.count >= self.maxCount:
             self.ret = self.call()
             self.count = 0
             return self.ret
@@ -120,6 +120,7 @@ class CameraCallback:
         self.maxFps = 0
         self.avgFps = 0
         self.lastTime = time.monotonic()
+        self.table.putBoolean("Enabled", True)
 
     def __call__(self, frame: np.ndarray, res: Dict[str, List[FoundObject]]):
         global done
@@ -258,7 +259,7 @@ class CameraCallback:
                 )
                 self.table.putNumber(f"Tags.{i}.id", unwrap_or(tags[i].ident, -9999.0))
 
-            self.cam.enabled = self.table.getBoolean("Enabled")
+            self.cam.enabled = self.table.getBoolean("Enabled", True)
 
         done += 1
         self.frames += 1
@@ -348,7 +349,7 @@ def main():
 
             log_file.write(
                 "connected to table\n"
-                if ntIsConnected()
+                if ntIsConnected(True)
                 else "Failed to connect to table\n"
             )
 
