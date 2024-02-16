@@ -114,7 +114,7 @@ class CameraCallback:
     def __init__(self, table, cam):
         self.table = table
         self.cam = cam
-        self.frame = np.zeros((480, 640, 3))
+        self.frame = np.zeros((cam.height, cam.width, 3))
         self.frames = 0
         self.minFps = 100
         self.maxFps = 0
