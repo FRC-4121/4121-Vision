@@ -6,12 +6,13 @@ corners = np.array(
     [[-3.25, +3.25, 0], [+3.25, +3.25, 0], [+3.25, -3.25, 0], [-3.25, -3.25, 0]]
 )
 
-camMat = np.array([[840, 0, 320], [0, 840, 240], [0, 0, 1]])
 
 
 def cvt_res(
     r: pyapriltags.Detection, cameraWidth: int, cameraHeight: int, cameraFOV: float
 ) -> FoundObject:
+    f = 0.5 / math.tan(cameraFOV * math.pi / 360) * cameraWidth
+    camMat = np.array([[f, 0, cameraWidth // 2], [0, f, cameraHeight // 2], [0, 0, 1]])
     xs = sorted([c[0] for c in r.corners])
     ys = sorted([c[1] for c in r.corners])
     w = int(xs[-1] - xs[0])
@@ -40,7 +41,7 @@ def cvt_res(
 
     if good:
         dist = math.sqrt(np.sum(np.square(pose_t)))
-        dist -= dist // 30  # trust me bro
+        # dist = 1.16 * dist - 3.5
         obj.distance = dist
     return obj
 

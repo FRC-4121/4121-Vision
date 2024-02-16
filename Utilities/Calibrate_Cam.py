@@ -36,13 +36,13 @@ if None == team4121cfg:
 # Set general variables
 # calibration_dir = 'C:/Users/timfu/Documents/FRC General/Camera'
 # working_dir = 'C:/Users/timfu/Documents/FRC General/Camera/Calibration_Images'
-calibration_dir = team4121home + "/config/" + team4121cfg
-working_dir = team4121home + "/config/" + team4121cfg
+calibration_dir = team4121home + "/config/" + team4121cfg + "/cfg"
+working_dir = team4121home + "/config/" + team4121cfg + "/cfg"
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # Set image variables
-img_width = 640
-img_height = 480
+img_width = 1280
+img_height = 960
 frames_per_sec = 15
 img_brightness = 100
 img_exposure = 50
@@ -59,9 +59,12 @@ imgpoints = []
 # Define main processing function
 def mainloop():
     # Clear image working directory
-    print("Clearing working directory...")
-    for fname in os.listdir(working_dir):
-        os.remove(working_dir + "/" + fname)
+    if os.path.exists(working_dir):
+        print("Clearing working directory...")
+        for fname in os.listdir(working_dir):
+            os.remove(working_dir + "/" + fname)
+    else:
+        os.makedirs(working_dir)
 
     # Prompt for which camera
     device_temp = int(input("Camera to calibrate (0, 1, 2 or 3): "))
@@ -77,7 +80,7 @@ def mainloop():
     camera.set(cv.CAP_PROP_FRAME_HEIGHT, img_height)
     camera.set(cv.CAP_PROP_FPS, frames_per_sec)
     camera.set(cv.CAP_PROP_BRIGHTNESS, img_brightness)
-    camera.set(cv.CAP_PROP_EXPOSURE, img_exposure)
+    # camera.set(cv.CAP_PROP_EXPOSURE, img_exposure)
 
     # Make sure video capture is open
     if camera.isOpened() == False:
