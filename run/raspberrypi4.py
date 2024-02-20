@@ -37,7 +37,7 @@ import numpy as np
 # import camera.picam
 import camera.frame
 import camera.usb
-from camera.base import CameraBase, killAllThreads
+from camera.base import CameraBase
 from vision.glob._2024 import *
 from threads import KillableThread
 
@@ -282,7 +282,7 @@ class CameraLoop:
 
 # Define main processing function
 def main():
-    global timeString, networkTablesConnected, killAllThreads
+    global timeString, networkTablesConnected
 
     time.sleep(startupSleep)
 
@@ -382,7 +382,8 @@ def main():
             if videoTesting:
                 cv.destroyAllWindows()
             
-            killAllThreads = True
+            for cam in cams:
+                cam.cam.kill = True
 
             for thread in threads:
                 thread.join(1.0)

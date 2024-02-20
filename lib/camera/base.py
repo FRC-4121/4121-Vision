@@ -74,6 +74,7 @@ class CameraBase:
         videofile: str | bool = True,
         enabled: bool = True,
     ):
+        self.name = name
         self.enabled = enabled
         if not CameraBase.stream:
             csname = False
@@ -145,9 +146,7 @@ class CameraBase:
         self.frame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
 
         self.grabbed = True
-
-        # Name the stream
-        self.name = name
+        self.kill = False
 
         # Read camera calibration files
         # cam_matrix_file = (
@@ -376,7 +375,7 @@ class CameraBase:
             callback(*args)
 
     def _loop_libs_fn(self, callback, *libs):
-        while not killAllThreads:
+        while not self.kill:
             args = self.use_libs(*libs, sleep_if_fail=0.01)
             if self.grabbed or not self.enabled:
                 callback(*args)
