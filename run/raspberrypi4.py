@@ -54,7 +54,6 @@ videoTesting = team4121visiontest.lower() in ["true", "1", "t", "y", "yes"]
 syncCamera = team4121camerasync.lower() in ["true", "1", "t", "y", "yes"]
 saveVideo = team4121videosave.lower() in ["true", "1", "t", "y", "yes"]
 resizeVideo = False
-saveVideo = False
 networkTablesConnected = True
 startupSleep = 0
 
@@ -258,7 +257,7 @@ class CameraLoop:
         profile: bool = False,
     ):
         self.name = name
-        self.cam = CameraBase.init_cam(name, timeString, csname, videofile, profile)
+        self.cam = CameraBase.init_cam(name, timeString, csname, profile, videofile)
 
         if table is None:
             table = self.cam.get_config("NTNAME", self.cam.name.lower())

@@ -106,7 +106,7 @@ class CameraBase:
         # Set up video writer
         if type(videofile) is bool:
             if videofile:
-                self.videoFilename = "{}/{}.avi".format(team4121videos, name, timestamp)
+                self.videoFilename = "{}/{}_{}.avi".format(team4121videos, name, timestamp)
             else:
                 self.videoFilename = None
         else:
@@ -114,6 +114,7 @@ class CameraBase:
 
         if self.videoFilename is None:
             self.camWriter = None
+            self.saveVideo = False
         else:
             fourcc = cv.VideoWriter_fourcc(*"MJPG")
             self.camWriter = cv.VideoWriter(
