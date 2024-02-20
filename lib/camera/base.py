@@ -345,9 +345,6 @@ class CameraBase:
 
     # Release all camera resources
     def close(self):
-        # Release the camera resource
-        self.camStream.release()
-
         # Release video writer
         self.camWriter.release()
 

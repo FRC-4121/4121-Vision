@@ -66,6 +66,7 @@ class UsbCamera(CameraBase):
             self.log_file.write("Can't find camera, either by PORT or ID!\n")
             self.log_file.flush()
             self.evenTry = False
+            self.camStream = None
             return
         self.camStream = cv.VideoCapture(self.device_id)
         self.camStream.setExceptionMode(True)

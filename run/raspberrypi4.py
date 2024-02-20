@@ -385,7 +385,7 @@ def main():
             killAllThreads = True
 
             for thread in threads:
-                thread.join(0.1)
+                thread.join(1.0)
                 if thread.is_alive():
                     log_file.write(f"thread {thread.name}({thread.ident}) still running after sent kill command\n")
 
