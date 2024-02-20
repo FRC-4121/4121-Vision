@@ -24,6 +24,13 @@ import importlib as imp
 from threads import KillableThread
 import time
 
+team4121home = os.getenv("TEAM4121HOME", os.getcwd())
+team4121config = os.getenv("TEAM4121CONFIG", "2024")
+team4121logs = os.getenv("TEAM4121LOGS", team4121home + "/logs")
+team4121videos = os.getenv("TEAM4121VIDEOS", team4121home + "/videos")
+
+killAllThreads = False
+
 CvSource = None
 VideoMode = None
 
@@ -43,18 +50,8 @@ def load_cscore():
         CvSource = cscore.CvSource
         VideoMode = cscore.VideoMode
 
-
-team4121home = os.environ.get("TEAM4121HOME")
-if None == team4121home:
-    team4121home = os.getcwd()
-
-team4121config = os.environ.get("TEAM4121CONFIG")
-if None == team4121config:
-    team4121config = "2024"
-
 # Set global variables
 calibration_dir = team4121home + "config" + team4121config
-
 
 # This is the base camera, from which all of our cameras inherit
 # The default initializer should probably be called before the rest of the initializer in derived classes
@@ -72,7 +69,6 @@ class CameraBase:
         self,
         name: str,
         timestamp: str,
-        videofile: Optional[str] = None,
         csname: str | bool = False,
         profile: bool = False,
         enabled: bool = True,
@@ -86,15 +82,14 @@ class CameraBase:
         self.name = name
 
         # Open a log file
-        logFilename = "{}/logs/webcam/log_{}_{}.txt".format(
-            team4121home, self.name, timestamp
+        logFilename = "{}/webcam/log_{}_{}.txt".format(
+            team4121logs, self.name, timestamp
         )
-        linkPath = "{}/logs/webcam/log_{}_LATEST.txt".format(team4121home, self.name)
+        linkPath = "{}/webcam/log_{}_LATEST.txt".format(team4121logs, self.name)
         if os.path.exists(linkPath):
             os.unlink(linkPath)
         os.symlink("log_{}_{}.txt".format(self.name, timestamp), linkPath)
-        if videofile is None:
-            videofile = "{}_{}".format(name, timestamp)
+        
         self.log_file = open(logFilename, "w")
         self.log_file.write("Initializing webcam: {}\n".format(self.name))
         # Initialize instance variables
@@ -108,7 +103,7 @@ class CameraBase:
         self.streamRes = int(self.get_config("STREAM_RES", 1))
 
         # Set up video writer
-        self.videoFilename = "videos/" + videofile + ".avi"
+        self.videoFilename = "{}/{}_{}.avi".format(team4121videos, name, timestamp)
         fourcc = cv.VideoWriter_fourcc(*"MJPG")
         self.camWriter = cv.VideoWriter(
             self.videoFilename, fourcc, self.fps, (self.width, self.height)
@@ -134,15 +129,11 @@ class CameraBase:
 
         # Initialize blank frames
         self.frame = np.zeros(shape=(self.height, self.width, 3), dtype=np.uint8)
-        self.frame.fill(128)
 
         self.grabbed = True
 
         # Name the stream
         self.name = name
-
-        # Initialize stop flag
-        self.stopped = False
 
         # Read camera calibration files
         # cam_matrix_file = (
@@ -233,7 +224,6 @@ class CameraBase:
     def init_cam(
         name: str,
         timestamp: str,
-        videofile: Optional[str] = None,
         csname: Optional[str] = None,
         profile: bool = False,
     ):
@@ -250,7 +240,7 @@ class CameraBase:
         if ty is None:
             raise KeyError("camera type not specified!")
 
-        return ty(name, timestamp, videofile, csname, profile)
+        return ty(name, timestamp, csname, profile)
 
     # Override point for camera
     def read_frame_raw(self) -> (bool, np.ndarray):
@@ -312,6 +302,7 @@ class CameraBase:
                 )
             )
 
+        self.write_video(self.frame)
         # Return the most recent frame
         return self.frame
 
@@ -338,7 +329,7 @@ class CameraBase:
             return False
 
     # Release all camera resources
-    def release_cam(self):
+    def close(self):
         # Release the camera resource
         self.camStream.release()
 
@@ -373,7 +364,7 @@ class CameraBase:
             callback(*args)
 
     def _loop_libs_fn(self, callback, *libs):
-        while True:
+        while not killAllThreads:
             args = self.use_libs(*libs, sleep_if_fail=0.01)
             if self.grabbed or not self.enabled:
                 callback(*args)

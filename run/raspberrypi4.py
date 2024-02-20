@@ -4,26 +4,18 @@
 import sys
 import os
 
-team4121home = os.environ.get("TEAM4121HOME")
-if None == team4121home:
-    team4121home = os.getcwd()
+def unwrap_or(val, default):
+    if val is None:
+        return default
+    else:
+        return val
 
-team4121config = os.environ.get("TEAM4121CONFIG")
-if None == team4121config:
-    team4121config = "2024"
-
-team4121visiontest = os.environ.get("TEAM4121VISIONTEST")
-if None == team4121visiontest:
-    team4121visiontest = "True"
-
-team4121camerasync = os.environ.get("TEAM4121CAMERASYNC")
-if None == team4121camerasync:
-    team4121camerasync = "False"
-
-
-nt_server_addr = os.environ.get("NT_SERVER_ADDR")
-if None == nt_server_addr:
-    nt_server_addr = "10.41.21.2"
+team4121home = os.getenv("TEAM4121HOME", os.getcwd())
+team4121config = os.getenv("TEAM4121CONFIG", "2024")
+team4121logs = os.getenv("TEAM4121LOGS", team4121home + "/logs")
+team4121visiontest = os.getenv("TEAM4121VISIONTEST", "True")
+team4121camerasync = os.getenv("TEAM4121CAMERASYNC", "False")
+nt_server_addr = os.getenv("NT_SERVER_ADDR", "10.41.21,2")
 
 # Setup paths
 sys.path.append(team4121home + "/lib")
@@ -44,7 +36,7 @@ import numpy as np
 # import camera.picam
 import camera.frame
 import camera.usb
-from camera.base import CameraBase
+from camera.base import CameraBase, killAllThreads
 from vision.glob._2024 import *
 from threads import KillableThread
 
@@ -79,15 +71,6 @@ timeString = "{}-{}-{}_{}:{}:{}".format(
 
 nt = ntcore.NetworkTableInstance.getDefault()
 
-
-def unwrap_or(val, default):
-    if val is None:
-        return default
-    else:
-        return val
-
-
-done = 0
 stop = False
 
 
@@ -123,7 +106,6 @@ class CameraCallback:
         self.table.putBoolean("Enabled", True)
 
     def __call__(self, frame: np.ndarray, res: Dict[str, List[FoundObject]]):
-        global done
         fieldTime = time.monotonic()
         fieldFps = 1 / (fieldTime - self.lastTime)
         self.lastTime = fieldTime
@@ -261,7 +243,6 @@ class CameraCallback:
 
             self.cam.enabled = self.table.getBoolean("Enabled", True)
 
-        done += 1
         self.frames += 1
 
 
@@ -270,18 +251,11 @@ class CameraLoop:
         self,
         name: str,
         table: ntcore.NetworkTable | str | None = None,
-        videofile: str | bool = False,
         csname: str | bool = False,
         profile: bool = False,
     ):
-        if type(videofile) is bool:
-            if videofile:
-                videofile = f"{name}_{timeString}"
-            else:
-                videofile = None
-
         self.name = name
-        self.cam = CameraBase.init_cam(name, timeString, videofile, csname, profile)
+        self.cam = CameraBase.init_cam(name, timeString, csname, profile)
 
         if table is None:
             table = self.cam.get_config("NTNAME", self.cam.name.lower())
@@ -306,7 +280,7 @@ class CameraLoop:
 
 # Define main processing function
 def main():
-    global timeString, networkTablesConnected, visionTable, done
+    global timeString, networkTablesConnected, killAllThreads
 
     time.sleep(startupSleep)
 
@@ -315,8 +289,8 @@ def main():
     VisionBase.read_vision_file(visionFile)
 
     # Open a log file
-    logFilename = team4121home + "/logs/run/log_" + timeString + ".txt"
-    linkPath = team4121home + "/logs/run/log_LATEST.txt"
+    logFilename = team4121logs + "/run/log_" + timeString + ".txt"
+    linkPath = team4121logs + "/run/log_LATEST.txt"
     if os.path.exists(linkPath):
         os.unlink(linkPath)
     os.symlink("log_" + timeString + ".txt", linkPath)
@@ -409,6 +383,16 @@ def main():
             # Close all open windows (for testing)
             if videoTesting:
                 cv.destroyAllWindows()
+            
+            killAllThreads = True
+
+            for thread in threads:
+                thread.join(0.1)
+                if thread.isRunning():
+                    log_file.write(f"thread {thread.name}({thread.ident}) still running after sent kill command\n")
+
+            for cam in cams:
+                cam.cam.close()
 
             for thread in threads:
                 thread.kill()
@@ -417,9 +401,6 @@ def main():
             log_file.write("Run stopped on {}.\n".format(datetime.datetime.now()))
         except Exception as e:
             log_file.write(f"An exception occured: {e}\n")
-        finally:
-            for cam in cams:
-                cam.cam.log_file.close()
 
 
 if __name__ == "__main__":

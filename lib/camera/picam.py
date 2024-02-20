@@ -16,11 +16,10 @@ class PiCam(CameraBase):
         self,
         name: str,
         timestamp: str,
-        videofile: Optional[str] = None,
         csname: Optional[str] = None,
         profile: bool = False,
     ):
-        super().__init__(name, timestamp, videofile, csname, profile)
+        super().__init__(name, timestamp, csname, profile)
         self.camStream = Picamera2(int(self.get_config("ID", 0)))
         self.camStream.resolution = (self.width, self.height)
         self.camStream.framerate = self.fps
