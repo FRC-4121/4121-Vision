@@ -19,6 +19,16 @@ if [ "$TEAM4121HOME" = "" ]; then
 fi
 export TEAM4121HOME
 
+if [ "$TEAM4121LOGS" = "" ]; then
+  TEAM4121LOGS="/home/team4121/4121-Vision/logs"
+fi
+export TEAM4121LOGS
+
+if [ "$TEAM4121VIDEOS" = "" ]; then
+  TEAM4121VIDEOS="/home/team4121/4121-Vision/videos"
+fi
+export TEAM4121VIDEOS
+
 if [ "$TEAM4121CONFIG" = "" ]; then
   TEAM4121CONFIG="2024_competition"
 fi
@@ -28,6 +38,16 @@ if [ "$TEAM4121VISIONTEST" = "" ]; then
   TEAM4121VISIONTEST="False"
 fi
 export TEAM4121VISIONTEST
+
+if [ "$TEAM4121CAMERASYNC" = "" ]; then
+  TEAM4121CAMERASYNC="False"
+fi
+export TEAM4121CAMERASYNC
+
+if [ "$TEAM4121VIDEOSAVE" = "" ]; then
+  TEAM4121VIDEOSAVE="True"
+fi
+export TEAM4121VIDEOSAVE
 
 if [ "$NT_SERVER_ADDR" = "" ]; then
   NT_SERVER_ADDR="10.41.21.2"
