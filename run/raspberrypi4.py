@@ -16,7 +16,7 @@ team4121logs = os.getenv("TEAM4121LOGS", team4121home + "/logs")
 team4121visiontest = os.getenv("TEAM4121VISIONTEST", "True")
 team4121camerasync = os.getenv("TEAM4121CAMERASYNC", "False")
 team4121videosave = os.getenv("TEAM4121VIDEOSAVE", "True")
-nt_server_addr = os.getenv("NT_SERVER_ADDR", "10.41.21,2")
+nt_server_addr = os.getenv("NT_SERVER_ADDR", "10.41.21.2")
 
 # Setup paths
 sys.path.append(team4121home + "/lib")
