@@ -321,14 +321,12 @@ class CameraBase:
         return self.frame
 
     # Write a frame to the video file
-    def write_video(self, img: np.ndarray) -> bool:
+    def write_video(self, img: np.ndarray):
         # Check if write is opened
         if self.camWriter is not None and self.camWriter.isOpened():
             # Write the image
             try:
                 self.camWriter.write(img)
-                return True
-
             except Exception as write_error:
                 # Print exception info
                 self.log_file.write(
@@ -336,11 +334,6 @@ class CameraBase:
                         type(write_error), write_error.args, write_error
                     )
                 )
-                return False
-
-        else:
-            self.log_file.write("Video writer not opened!\n")
-            return False
 
     # Release all camera resources
     def close(self):
