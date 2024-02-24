@@ -20,12 +20,12 @@ fi
 export TEAM4121HOME
 
 if [ "$TEAM4121LOGS" = "" ]; then
-  TEAM4121LOGS="/home/team4121/4121-Vision/logs"
+  TEAM4121LOGS="/mnt/data/4121-Vision/logs"
 fi
 export TEAM4121LOGS
 
 if [ "$TEAM4121VIDEOS" = "" ]; then
-  TEAM4121VIDEOS="/home/team4121/4121-Vision/videos"
+  TEAM4121VIDEOS="/mnt/data/4121-Vision/videos"
 fi
 export TEAM4121VIDEOS
 
