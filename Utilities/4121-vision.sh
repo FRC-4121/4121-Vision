@@ -1,4 +1,13 @@
 #!/bin/sh
+### BEGIN INIT INFO
+# Provides:          4121-vision
+# Required-Start:    $local_fs udev
+# Required-Stop:     $local_fs
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 4 6
+# Short-Description: Start Team 4121 Robot Vision service
+# Description:       Start Team 4121 Robot Vision service at boot time.
+### END INIT INFO
 
 #   This script enables the FRC Team 4121 Vision processing to start upon boot of the Raspberry Pi 4.
 #   Install this script by issuing these commands:
