@@ -22,6 +22,7 @@ import cv2 as cv
 import numpy as np
 import importlib as imp
 from threads import KillableThread
+from flush import flush
 import time
 
 team4121home = os.getenv("TEAM4121HOME", os.getcwd())
@@ -186,6 +187,7 @@ class CameraBase:
         else:
             self.blacklist = False
         self.pipes = {s.strip() for s in pipes.split(",")}
+        self.cameraCounter = 0
 
     @staticmethod
     def read_config_file(file, reload: bool = False) -> bool:
@@ -316,8 +318,8 @@ class CameraBase:
                     (self.width // self.streamRes, self.height // self.streamRes),
                 )
             )
-
         self.write_video(self.frame)
+
         # Return the most recent frame
         return self.frame
 
@@ -335,6 +337,12 @@ class CameraBase:
                         type(write_error), write_error.args, write_error
                     )
                 )
+            if self.cameraCounter < 50:
+                self.cameraCounter += 1
+            else:
+                self.cameraCounter = 0
+                self.log_file.flush()
+                flush()
 
     # Release all camera resources
     def close(self):

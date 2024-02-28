@@ -41,6 +41,7 @@ import camera.usb
 from camera.base import CameraBase
 from vision.glob._2024 import *
 from threads import KillableThread
+from flush import flush
 
 # Set up basic logging
 logging.basicConfig(level=logging.DEBUG)
@@ -299,6 +300,7 @@ def main():
     os.symlink("log_" + timeString + ".txt", linkPath)
     with open(logFilename, "w") as log_file:
         cams = []
+        flushLog = PollerFn(lambda: log_file.flush())
         try:
             log_file.write("Run started on {}.\n".format(datetime.datetime.now()))
             log_file.write("")
@@ -357,6 +359,7 @@ def main():
 
                 # Check for stop code from network tables
                 checkStop()
+                flushLog()
 
                 if syncCamera:
                     for cam in cams:
@@ -399,7 +402,8 @@ def main():
             log_file.write("Run stopped on {}.\n".format(datetime.datetime.now()))
         except Exception as e:
             log_file.write(f"An exception occured: {e}\n")
-
+        finally:
+            flush()
 
 if __name__ == "__main__":
 
