@@ -297,7 +297,13 @@ def main():
     linkPath = team4121logs + "/run/log_LATEST.txt"
     if os.path.exists(linkPath):
         os.unlink(linkPath)
-    os.symlink("log_" + timeString + ".txt", linkPath)
+        flush()
+    try:
+        os.symlink("log_" + timeString + ".txt", linkPath)
+    except Exception as e:
+        print(e)
+        raise e
+
     with open(logFilename, "w") as log_file:
         cams = []
         flushLog = PollerFn(lambda: log_file.flush())

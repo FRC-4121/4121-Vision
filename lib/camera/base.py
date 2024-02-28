@@ -91,8 +91,14 @@ class CameraBase:
         linkPath = "{}/webcam/log_{}_LATEST.txt".format(team4121logs, self.name)
         if os.path.exists(linkPath):
             os.unlink(linkPath)
-        os.symlink("log_{}_{}.txt".format(self.name, timestamp), linkPath)
-        
+            flush()
+
+        try:
+            os.symlink("log_{}_{}.txt".format(self.name, timestamp), linkPath)
+        except Exception as e:
+            print(e)
+            raise e
+
         self.log_file = open(logFilename, "w")
         self.log_file.write("Initializing webcam: {}\n".format(self.name))
         # Initialize instance variables
