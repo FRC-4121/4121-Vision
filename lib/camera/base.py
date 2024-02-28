@@ -103,6 +103,7 @@ class CameraBase:
         self.fov = float(self.get_config("FOV", 0.0))
         self.fps = int(self.get_config("FPS", 30))
         self.streamRes = int(self.get_config("STREAM_RES", 1))
+        self.cropBottom = int(self.get_config("CROP_BOTTOM", 0))
 
         # Set up video writer
         if type(videofile) is bool:
@@ -299,7 +300,7 @@ class CameraBase:
                 )
                 x, y, w, h = roi
                 self.frame = self.frame[y : y + h, x : x + w]
-
+            cv.rectangle(self.frame, (0, self.height - self.cropBottom), (self.width, self.height), (0, 0, 0), -1)
         except Exception as read_error:
             # Write error to log
             self.log_file.write(
