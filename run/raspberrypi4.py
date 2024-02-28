@@ -16,6 +16,7 @@ team4121logs = os.getenv("TEAM4121LOGS", team4121home + "/logs")
 team4121visiontest = os.getenv("TEAM4121VISIONTEST", "True")
 team4121camerasync = os.getenv("TEAM4121CAMERASYNC", "False")
 team4121videosave = os.getenv("TEAM4121VIDEOSAVE", "True")
+cameralist = os.getenv("TEAM4121CAMERALIST", "INTAKE,SHOOTER")
 nt_server_addr = os.getenv("NT_SERVER_ADDR", "10.41.21.2")
 
 # Setup paths
@@ -61,7 +62,7 @@ if getenv("DISPLAY") is None:  # We're on the robot, do stuff for realsies
     videoTesting = False
 
 currentTime = time.localtime(time.time())
-timeString = "{0>2}-{0>2}-{0>2}_{:0>2}{:0>2}{:0>2}".format(
+timeString = "{:0>2}-{:0>2}-{:0>2}_{:0>2}{:0>2}{:0>2}".format(
     currentTime.tm_year,
     currentTime.tm_mon,
     currentTime.tm_mday,
@@ -330,9 +331,7 @@ def main():
                     stop = True
 
             checkStop = PollerFn(checkStopFn)
-            cams = [CameraLoop("INTAKE"), CameraLoop("SHOOTER")]
-            # cams = [CameraLoop("INTAKE")]
-            # cams = [CameraLoop("DUMMY")]
+            cams = list(map(CameraLoop, cameralist.split(",")))
             threads = []
 
             # post-initializer call, this MUST happen
