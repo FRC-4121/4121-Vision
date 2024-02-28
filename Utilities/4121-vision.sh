@@ -69,21 +69,27 @@ case "$1" in
   start)
     # Only works with logitech!!!
     for cam in 0 1 2 3; do
-        v4l2-ctl -d /dev/video$cam -c auto_exposure=1
-        v4l2-ctl -d /dev/video$cam -c exposure_time_absolute=300
+      v4l2-ctl -d /dev/video$cam -c auto_exposure=1
+      v4l2-ctl -d /dev/video$cam -c exposure_time_absolute=300
     done
-    start-stop-daemon --start --pidfile $PIDFILE --make-pidfile --background --exec ${TEAM4121HOME}/run/raspberrypi4.py
-	  STATUS=$?
-	  if [ $STATUS != 0 ]; then
-	    log_end_msg $STATUS
-    fi
+    for cam in INTAKE SHOOTER; do
+        TEAM4121CAMERALIST=$cam
+        export TEAM4121CAMERALIST
+        start-stop-daemon --start --pidfile $PIDFILE-$cam --make-pidfile --background --exec ${TEAM4121HOME}/run/raspberrypi4.py
+        STATUS=$?
+        if [ $STATUS != 0 ]; then
+          log_end_msg $STATUS
+        fi
+    done
     ;;
   stop)
-    start-stop-daemon --stop --pidfile $PIDFILE --remove-pidfile --oknodo
-	  STATUS=$?
-	  if [ $STATUS != 0 ]; then
-	    log_end_msg $STATUS
-    fi
+    for cam in INTAKE SHOOTER; do
+      start-stop-daemon --stop --pidfile $PIDFILE-$cam --remove-pidfile --oknodo
+      STATUS=$?
+      if [ $STATUS != 0 ]; then
+        log_end_msg $STATUS
+      fi
+    done
     ;;
   *)
     echo "Usage: $0 start" >&2
