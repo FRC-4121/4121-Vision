@@ -61,7 +61,7 @@ if getenv("DISPLAY") is None:  # We're on the robot, do stuff for realsies
     videoTesting = False
 
 currentTime = time.localtime(time.time())
-timeString = "{}-{}-{}_{}:{}:{}".format(
+timeString = "{0>2}-{0>2}-{0>2}_{:0>2}{:0>2}{:0>2}".format(
     currentTime.tm_year,
     currentTime.tm_mon,
     currentTime.tm_mday,
