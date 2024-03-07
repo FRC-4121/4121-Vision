@@ -163,6 +163,7 @@ class CameraBase:
 
         self.grabbed = True
         self.kill = False
+        self.printException = True
 
         # Read camera calibration files
         # cam_matrix_file = (
@@ -317,13 +318,16 @@ class CameraBase:
                 (0, 0, 0),
                 -1,
             )
+            self.printException = True
         except Exception as read_error:
-            # Write error to log
-            self.log_file.write(
-                "Error reading video:\n    type: {}\n    args: {}\n    {}\n".format(
-                    type(read_error), read_error.args, read_error
+            if self.printException:
+                self.printException = False
+                # Write error to log
+                self.log_file.write(
+                    "Error reading video:\n    type: {}\n    args: {}\n    {}\n".format(
+                        type(read_error), read_error.args, read_error
+                    )
                 )
-            )
 
         if self.cvs is not None:
             self.cvs.putFrame(
