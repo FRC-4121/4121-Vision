@@ -100,6 +100,7 @@ class CameraBase:
             raise e
 
         self.log_file = open(logFilename, "w")
+        self.log_file.write(f"CAMLOG: {logFilename}\n")
         self.log_file.write("Initializing webcam: {}\n".format(self.name))
         # Initialize instance variables
         self.undistort_img = False
