@@ -67,11 +67,6 @@ STATUS=0
 
 case "$1" in
   start)
-    # Only works with logitech!!!
-    for cam in 0 1 2 3; do
-      v4l2-ctl -d /dev/video$cam -c auto_exposure=1
-      v4l2-ctl -d /dev/video$cam -c exposure_time_absolute=300
-    done
     for cam in INTAKE SHOOTER; do
         TEAM4121CAMERALIST=$cam
         export TEAM4121CAMERALIST

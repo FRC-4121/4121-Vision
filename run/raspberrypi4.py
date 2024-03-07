@@ -293,24 +293,24 @@ def main():
     VisionBase.read_vision_file(visionFile)
 
     # Open a log file
-    logFilename = team4121logs + "/run/log_" + timeString + ".txt"
+    safeName = cameralist.replace(",", "_")
+    logFilename = "{}/run/log_{}_{}.txt".format(team4121logs, safeName, timeString)
+    linkPath = "{}/run/log_{}_LATEST.txt".format(team4121logs, safeName) 
 
-    with open(logFilename, "w") as log_file:
-        log_file.write(f"RUNLOG: {logFilename}\n")
-        linkPath = team4121logs + "/run/log_LATEST.txt"
-        if os.path.exists(linkPath):
-            os.unlink(linkPath)
-            flush()
-        try:
-            os.symlink("log_" + timeString + ".txt", linkPath)
-        except Exception as e:
-            print(e)
-            raise e
+    with open(logFilename, "a") as log_file:
         cams = []
         flushLog = PollerFn(lambda: log_file.flush())
         try:
+            log_file.write(f"RUNLOG: {logFilename}\n")
             log_file.write("Run started on {}.\n".format(datetime.datetime.now()))
-            log_file.write("")
+            if os.path.exists(linkPath):
+                os.unlink(linkPath)
+                flush()
+            try:
+                os.symlink("log_{}_{}.txt".format(safeName, timeString), linkPath)
+            except Exception as e:
+                print(e)
+                raise e
             controlTable = None
 
             # Connect NetworkTables

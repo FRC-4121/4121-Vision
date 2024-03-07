@@ -13,7 +13,6 @@ for id in range(10):
         cs.set(cv.CAP_PROP_FRAME_WIDTH, 640)
         cs.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
         cs.set(cv.CAP_PROP_BRIGHTNESS, 100)
-        cs.set(cv.CAP_PROP_EXPOSURE, 0)
         cs.set(cv.CAP_PROP_FPS, 15)
         cams.append((cs, "Camera {}".format(id)))
 
@@ -24,7 +23,6 @@ for id in os.listdir("/dev/v4l/by-path") if os.path.exists("/dev/v4l/by-path") e
         cs.set(cv.CAP_PROP_FRAME_WIDTH, 640)
         cs.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
         cs.set(cv.CAP_PROP_BRIGHTNESS, 100)
-        cs.set(cv.CAP_PROP_EXPOSURE, 0)
         cs.set(cv.CAP_PROP_FPS, 15)
         cams.append((cs, id))
 
@@ -35,7 +33,6 @@ for id in os.listdir("/dev/v4l/by-id") if os.path.exists("/dev/v4l/by-id") else 
         cs.set(cv.CAP_PROP_FRAME_WIDTH, 640)
         cs.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
         cs.set(cv.CAP_PROP_BRIGHTNESS, 100)
-        cs.set(cv.CAP_PROP_EXPOSURE, 0)
         cs.set(cv.CAP_PROP_FPS, 15)
         cams.append((cs, id))
 

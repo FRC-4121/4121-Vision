@@ -3,7 +3,7 @@ from typing import *
 import os
 import cv2 as cv
 import numpy as np
-
+import subprocess
 
 # How does this work? I have no idea!
 def find_cams(port: int):
@@ -68,6 +68,11 @@ class UsbCamera(CameraBase):
             self.evenTry = False
             self.camStream = None
             return
+
+        # setting CAP_PROP_EXPOSURE with OpenCV might work? Seems to only work when inconvenient
+        res = subprocess.run(["v4l2-ctl", "-d", f"/dev/video{self.device_id}", "-c", "auto_exposure=1", "-c", "exposure_time_absolute=300"])
+        self.log_file.write(f"v4l2-ctl configured camera, exit code {res.returncode}\n")
+
         self.camStream = cv.VideoCapture(self.device_id)
         self.camStream.setExceptionMode(True)
         try:
