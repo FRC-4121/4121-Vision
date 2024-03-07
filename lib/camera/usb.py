@@ -162,7 +162,8 @@ class UsbCamera(CameraBase):
         try:
             good, frame = self.camStream.read()
         except cv.error as e:
-            self.log_file.write(f"Error reading camera: {e}\n")
+            if self.printException:
+                self.log_file.write(f"Error reading camera: {e}\n")
             return False, np.zeros((0, 0, 3))
         return good, frame
 
