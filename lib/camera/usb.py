@@ -69,6 +69,7 @@ class UsbCamera(CameraBase):
             self.camStream = None
             return
 
+        # setting CAP_PROP_EXPOSURE with OpenCV might work? Seems to only work when inconvenient
         res = subprocess.run(["v4l2-ctl", "-d", f"/dev/video{self.device_id}", "-c", "auto_exposure=1", "-c", "exposure_time_absolute=300"])
         self.log_file.write(f"v4l2-ctl configured camera, exit code {res.returncode}")
 
