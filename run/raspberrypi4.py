@@ -37,7 +37,7 @@ import numpy as np
 # Team 4121 module imports
 # import camera.picam
 import camera.frame
-import camera.usb
+from camera.usb import UsbCamera
 from camera.base import CameraBase
 from vision.glob._2024 import *
 from threads import KillableThread
@@ -284,7 +284,7 @@ class CameraLoop:
 
 # Define main processing function
 def main():
-    global timeString, networkTablesConnected
+    global timeString, networkTablesConnected, cameralist
 
     time.sleep(startupSleep)
 
@@ -311,6 +311,15 @@ def main():
             except Exception as e:
                 print(e)
                 raise e
+            
+            devp = os.getenv("DEVPATH")
+            if devp is not None:
+                cameralist = UsbCamera.name_from_devpath(devp)
+                if cameralist is None:
+                    log_file.write(f"Couldn't find a camera matching {devp}!")
+                    flush()
+                    return
+
             controlTable = None
 
             # Connect NetworkTables
@@ -343,7 +352,7 @@ def main():
             checkStop = PollerFn(checkStopFn)
             cams = list(map(CameraLoop, cameralist.split(",")))
             threads = []
-
+            
             # post-initializer call, this MUST happen
             for cam in cams:
                 cam.cam.post_init()
