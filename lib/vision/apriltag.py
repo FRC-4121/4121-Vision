@@ -7,7 +7,6 @@ corners = np.array(
 )
 
 
-
 def cvt_res(
     r: pyapriltags.Detection, cameraWidth: int, cameraHeight: int, cameraFOV: float
 ) -> FoundObject:

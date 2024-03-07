@@ -1,4 +1,4 @@
-from camera.base import CameraBase
+from camera.base import *
 from typing import Optional
 import numpy as np
 
@@ -7,9 +7,13 @@ import numpy as np
 # If a frame is not given, use a black one
 class SingleFrame(CameraBase):
     def __init__(
-        self, name: str, timestamp: str, *ignored, frame: Optional[np.ndarray] = None
+        self,
+        name: str,
+        timestamp: str,
+        params: CameraParams = CameraParams(),
+        frame: Optional[np.ndarray] = None,
     ):
-        super().__init__(name, timestamp)
+        super().__init__(name, timestamp, params)
         self.frame = (
             frame
             if frame is not None

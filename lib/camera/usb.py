@@ -1,10 +1,11 @@
-from camera.base import CameraBase
+from camera.base import *
 from typing import *
 import os
 import cv2 as cv
 import numpy as np
 import subprocess
 import re
+
 
 # How does this work? I have no idea!
 def find_cams(port: int):
@@ -36,18 +37,19 @@ def find_cams(port: int):
         if len(files) > 0:
             return files[0]
 
-pi4_re = re.compile("/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.(\\d)/1-1.\\1:1.0.*")
-pi5_re = re.compile("/devices/platform/axi/1000120000.pcie/1f00(\\d)00000.usb/xhci-hcd.(\\d)/usb(\\d)/\\3-(\\d)/\\3-\\4:1.0.*")
+
+pi4_re = re.compile(
+    "/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.(\\d)/1-1.\\1:1.0.*"
+)
+pi5_re = re.compile(
+    "/devices/platform/axi/1000120000.pcie/1f00(\\d)00000.usb/xhci-hcd.(\\d)/usb(\\d)/\\3-(\\d)/\\3-\\4:1.0.*"
+)
+
 
 # Camera using `cv.VideoCapture`, best for USB camera
 class UsbCamera(CameraBase):
     def __init__(
-        self,
-        name: str,
-        timestamp: str,
-        csname: Optional[str] = None,
-        videofile: str | bool = True,
-        profile: bool = False,
+        self, name: str, timestamp: str, params: CameraParams = CameraParams()
     ):
         self.name = name
         port = self.get_config("PORT", None)
@@ -63,7 +65,7 @@ class UsbCamera(CameraBase):
         else:
             self.device_id = port
 
-        super().__init__(name, timestamp, csname, videofile, profile)
+        super().__init__(name, timestamp, params)
 
         if self.device_id is None:
             self.log_file.write("Can't find camera, either by PORT or ID!\n")
@@ -73,7 +75,17 @@ class UsbCamera(CameraBase):
             return
 
         # setting CAP_PROP_EXPOSURE with OpenCV might work? Seems to only work when inconvenient
-        res = subprocess.run(["v4l2-ctl", "-d", f"/dev/video{self.device_id}", "-c", "auto_exposure=1", "-c", "exposure_time_absolute=300"])
+        res = subprocess.run(
+            [
+                "v4l2-ctl",
+                "-d",
+                f"/dev/video{self.device_id}",
+                "-c",
+                "auto_exposure=1",
+                "-c",
+                "exposure_time_absolute=300",
+            ]
+        )
         self.log_file.write(f"v4l2-ctl configured camera, exit code {res.returncode}\n")
 
         self.camStream = cv.VideoCapture(self.device_id)

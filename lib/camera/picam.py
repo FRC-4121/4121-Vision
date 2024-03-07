@@ -1,4 +1,4 @@
-from camera.base import CameraBase
+from camera.base import *
 from typing import *
 from picamera2 import Picamera2
 import numpy as np
@@ -13,14 +13,9 @@ Picamera2.set_logging(Picamera2.WARNING)
 # Use a picam
 class PiCam(CameraBase):
     def __init__(
-        self,
-        name: str,
-        timestamp: str,
-        csname: Optional[str] = None,
-        videofile: str | bool = True,
-        profile: bool = False,
+        self, name: str, timestamp: str, params: CameraParams = CameraParams()
     ):
-        super().__init__(name, timestamp, csname, videofile, profile)
+        super().__init__(name, timestamp, params)
         self.camStream = Picamera2(int(self.get_config("ID", 0)))
         self.camStream.resolution = (self.width, self.height)
         self.camStream.framerate = self.fps
