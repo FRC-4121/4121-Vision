@@ -364,20 +364,24 @@ class CameraBase:
 
     # Apply vision processors to a single frame
     def use_libs(self, *libs, sleep_if_fail: float = 0.0) -> Tuple[np.ndarray, dict]:
-        if self.enabled:
-            frame = self.read_frame()
-            if self.grabbed:
-                return (
-                    frame,
-                    {
-                        lib.name: lib.find_objects(
-                            frame, self.width, self.height, self.fov
-                        )
-                        for lib in libs
-                        if (lib.name in self.pipes) != self.blacklist
-                    },
-                )
-        time.sleep(sleep_if_fail)
+        try:
+            if self.enabled:
+                frame = self.read_frame()
+                if self.grabbed:
+                    return (
+                        frame,
+                        {
+                            lib.name: lib.find_objects(
+                                frame, self.width, self.height, self.fov
+                            )
+                            for lib in libs
+                            if (lib.name in self.pipes) != self.blacklist
+                        },
+                    )
+            time.sleep(sleep_if_fail)
+        except Exception as e:
+            self.log_file.write("Error: video processing failure.")
+            self.log_file.write("Error message: {}\n".format(e))
         return (self.frame, dict())
 
     def _use_libs_fn(self, callback, *libs):

@@ -294,18 +294,18 @@ def main():
 
     # Open a log file
     logFilename = team4121logs + "/run/log_" + timeString + ".txt"
-    linkPath = team4121logs + "/run/log_LATEST.txt"
-    if os.path.exists(linkPath):
-        os.unlink(linkPath)
-        flush()
-    try:
-        os.symlink("log_" + timeString + ".txt", linkPath)
-    except Exception as e:
-        print(e)
-        raise e
 
     with open(logFilename, "w") as log_file:
         log_file.write(f"RUNLOG: {logFilename}\n")
+        linkPath = team4121logs + "/run/log_LATEST.txt"
+        if os.path.exists(linkPath):
+            os.unlink(linkPath)
+            flush()
+        try:
+            os.symlink("log_" + timeString + ".txt", linkPath)
+        except Exception as e:
+            print(e)
+            raise e
         cams = []
         flushLog = PollerFn(lambda: log_file.flush())
         try:
@@ -330,7 +330,7 @@ def main():
                 log_file.write("Error message: {}\n".format(e))
 
             log_file.write(
-                "connected to table\n"
+                "Connected to table\n"
                 if ntIsConnected(True)
                 else "Failed to connect to table\n"
             )
