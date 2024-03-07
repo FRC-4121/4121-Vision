@@ -337,6 +337,7 @@ def main():
 
             def checkStopFn():
                 if ntIsConnected() and controlTable.getNumber("RobotStop", 0) == 1:
+                    log_file.write("Received stop signal from NT\n")
                     stop = True
 
             checkStop = PollerFn(checkStopFn)
@@ -362,6 +363,7 @@ def main():
 
                 # Check for stop code from keyboard (for testing)
                 if videoTesting and cv.waitKey(1) == 27:
+                    log_file.write("Received stop signal from ESC\n")
                     break
 
                 # Check for stop code from network tables
