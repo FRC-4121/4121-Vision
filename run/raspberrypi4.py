@@ -302,7 +302,7 @@ def main():
         os.symlink("log_" + timeString + ".txt", linkPath)
     except Exception as e:
         print(e)
-        raise e
+        # raise e
 
     with open(logFilename, "w") as log_file:
         cams = []
