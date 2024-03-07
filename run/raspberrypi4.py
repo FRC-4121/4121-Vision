@@ -437,6 +437,8 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGUSR1, stopit)
     signal.signal(signal.SIGINT, stopit)
+    signal.signal(signal.SIGTERM, stopit)
+    signal.signal(signal.SIGSTOP, stopit)
 
     gc.set_threshold(10000, 100, 100)
     gc.disable()
