@@ -339,7 +339,9 @@ class CameraBase:
     # Release all camera resources
     def close(self):
         # Release video writer
-        self.camWriter.release()
+        cw = getattr(self, "camWriter", None)
+        if cw is not None:
+            cw.release()
 
         # Close the log file
         self.log_file.write("Webcam closed. Video writer closed.\n")
