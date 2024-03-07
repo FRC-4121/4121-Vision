@@ -15,9 +15,9 @@ def unwrap_or(val, default):
 team4121home = os.getenv("TEAM4121HOME", os.getcwd())
 team4121config = os.getenv("TEAM4121CONFIG", "2024")
 team4121logs = os.getenv("TEAM4121LOGS", team4121home + "/logs")
-team4121visiontest = os.getenv("TEAM4121VISIONTEST", "False")
+team4121visiontest = os.getenv("TEAM4121VISIONTEST", "True")
 team4121camerasync = os.getenv("TEAM4121CAMERASYNC", "False")
-team4121videosave = os.getenv("TEAM4121VIDEOSAVE", "True")
+team4121videosave = os.getenv("TEAM4121VIDEOSAVE", "False")
 cameralist = os.getenv("TEAM4121CAMERALIST", "INTAKE,SHOOTER")
 nt_server_addr = os.getenv("NT_SERVER_ADDR", "10.41.21.2")
 
