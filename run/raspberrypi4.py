@@ -259,7 +259,7 @@ class CameraLoop:
         params: CameraParams = CameraParams(),
     ):
         self.name = name
-        self.cam = CameraBase.init_cam(name, timeString, params)
+        self.cam = CameraBase.init_cam(name, timeString, params._replace(videofile=saveVideo))
 
         if table is None:
             table = self.cam.get_config("NTNAME", self.cam.name.lower())
