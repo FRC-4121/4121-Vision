@@ -305,7 +305,7 @@ def main():
         print(e)
         raise e
 
-    with open(logFilename, "w") as log_file:
+    with open(logFilename, "a") as log_file:
         cams = []
         flushLog = PollerFn(lambda: log_file.flush())
         try:
