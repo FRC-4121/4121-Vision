@@ -97,9 +97,9 @@ class CameraBase:
             os.symlink("log_{}_{}.txt".format(self.name, timestamp), linkPath)
         except Exception as e:
             print(e)
-            # raise e
+            raise e
 
-        self.log_file = open(logFilename, "w")
+        self.log_file = open(logFilename, "a")
         self.log_file.write("Initializing webcam: {}\n".format(self.name))
         # Initialize instance variables
         self.undistort_img = False

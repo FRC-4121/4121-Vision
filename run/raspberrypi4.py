@@ -293,18 +293,19 @@ def main():
     VisionBase.read_vision_file(visionFile)
 
     # Open a log file
-    logFilename = team4121logs + "/run/log_" + timeString + ".txt"
-    linkPath = team4121logs + "/run/log_LATEST.txt"
+    safeName = cameralist.replace(",", "_")
+    logFilename = "{}/run/log_{}_{}.txt".format(team4121logs, safeName, timeString)
+    linkPath = "{}/run/log_{}_LATEST.txt".format(team4121logs, safeName)
     if os.path.exists(linkPath):
         os.unlink(linkPath)
         flush()
     try:
-        os.symlink("log_" + timeString + ".txt", linkPath)
+        os.symlink("log_{}_{}.txt".format(safeName, timeString), linkPath)
     except Exception as e:
         print(e)
-        # raise e
+        raise e
 
-    with open(logFilename, "w") as log_file:
+    with open(logFilename, "a") as log_file:
         cams = []
         flushLog = PollerFn(lambda: log_file.flush())
         try:
