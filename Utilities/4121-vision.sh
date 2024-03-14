@@ -18,6 +18,8 @@
 #     cd /etc/rc3.d
 #     sudo ln -s ../init.d/4121-vision.sh S024121-vision
 #     sudo ln -s ../init.d/4121-vision.sh K024121-vision
+#
+#   USE OF THIS TECHNIQUE IS MUTUALLY EXCLUSIVE WITH '/etc/udev/rules.d/90-4121-vision.rules'
 
 . /lib/lsb/init-functions
 

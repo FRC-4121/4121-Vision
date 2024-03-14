@@ -1,0 +1,5 @@
+#   Install this file as '/etc/udev/rules.d/90-4121-vision.rules'
+#   USE OF THIS TECHNIQUE IS MUTUALLY EXCLUSIVE WITH '/etc/init.d/4121-vision.sh'
+
+ACTION=="add", SUBSYSTEM=="video4linux", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0825", RUN+="/home/team4121/4121-Vision/Utilities/udev_add_C270.sh"
+ACTION=="remove", SUBSYSTEM=="video4linux", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0825", RUN+="/home/team4121/4121-Vision/Utilities/udev_remove_C270.sh"
