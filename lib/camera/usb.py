@@ -1,9 +1,11 @@
-from camera.base import CameraBase
+from camera.base import *
 from typing import *
 import os
 import cv2 as cv
 import numpy as np
 import subprocess
+import re
+
 
 # How does this work? I have no idea!
 def find_cams(port: int):
@@ -36,15 +38,18 @@ def find_cams(port: int):
             return files[0]
 
 
+pi4_re = re.compile(
+    "/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.(\\d)/1-1.\\1:1.0.*"
+)
+pi5_re = re.compile(
+    "/devices/platform/axi/1000120000.pcie/1f00(\\d)00000.usb/xhci-hcd.(\\d)/usb(\\d)/\\3-(\\d)/\\3-\\4:1.0.*"
+)
+
+
 # Camera using `cv.VideoCapture`, best for USB camera
 class UsbCamera(CameraBase):
     def __init__(
-        self,
-        name: str,
-        timestamp: str,
-        csname: Optional[str] = None,
-        videofile: str | bool = True,
-        profile: bool = False,
+        self, name: str, timestamp: str, params: CameraParams = CameraParams()
     ):
         self.name = name
         port = self.get_config("PORT", None)
@@ -60,7 +65,7 @@ class UsbCamera(CameraBase):
         else:
             self.device_id = port
 
-        super().__init__(name, timestamp, csname, videofile, profile)
+        super().__init__(name, timestamp, params)
 
         if self.device_id is None:
             self.log_file.write("Can't find camera, either by PORT or ID!\n")
@@ -70,7 +75,17 @@ class UsbCamera(CameraBase):
             return
 
         # setting CAP_PROP_EXPOSURE with OpenCV might work? Seems to only work when inconvenient
-        res = subprocess.run(["v4l2-ctl", "-d", f"/dev/video{self.device_id}", "-c", "auto_exposure=1", "-c", "exposure_time_absolute=300"])
+        res = subprocess.run(
+            [
+                "v4l2-ctl",
+                "-d",
+                f"/dev/video{self.device_id}",
+                "-c",
+                "auto_exposure=1",
+                "-c",
+                "exposure_time_absolute=300",
+            ]
+        )
         self.log_file.write(f"v4l2-ctl configured camera, exit code {res.returncode}\n")
 
         self.camStream = cv.VideoCapture(self.device_id)
@@ -99,6 +114,37 @@ class UsbCamera(CameraBase):
         except cv.error as e:
             self.log_file.write(f"Error during camera initialization: {e}\n")
             self.evenTry = False
+
+    # Get the name of a camera from its device path
+    @staticmethod
+    def name_from_devpath(path: str) -> Optional[str]:
+        port = None
+        if m := pi4_re.fullmatch(path):
+            n = int(m.group(1))
+            port = [None, 1, 0, 3, 2][n]
+        elif m := pi5_re.fullmatch(path):
+            n1 = int(m.group(1))
+            n2 = int(m.group(2))
+            n3 = int(m.group(3))
+            n4 = int(m.group(4))
+            if n1 - 2 == n2 and n2 * 2 + 1 == n3:
+                n = (n2 << 1) | (n4 * 2 - 2)
+                port = [0, 1, 3, 2][n]
+
+        if port is not None:
+            for name, cfg in CameraBase.config.items():
+                if name == "":
+                    continue
+                if "PORT" in cfg:
+                    p = cfg["PORT"]
+                    if p.isdigit() and int(p) == port:
+                        return name
+
+        for name, cfg in CameraBase.config.items():
+            if name == "":
+                continue
+            if "DEVPATH" in cfg and re.fullmatch(cfg["DEVPATH"], path):
+                return name
 
     def post_init(self):
         if self.evenTry:

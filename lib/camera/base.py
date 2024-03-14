@@ -23,6 +23,7 @@ import numpy as np
 import importlib as imp
 from threads import KillableThread
 from flush import flush
+from collections import namedtuple
 import time
 
 team4121home = os.getenv("TEAM4121HOME", os.getcwd())
@@ -51,8 +52,16 @@ def load_cscore():
         CvSource = cscore.CvSource
         VideoMode = cscore.VideoMode
 
+
 # Set global variables
 calibration_dir = team4121home + "config" + team4121config
+
+CameraParams = namedtuple(
+    "CameraParams",
+    ("csname", "profile", "videofile", "enabled"),
+    defaults=(False, False, True, True),
+)
+
 
 # This is the base camera, from which all of our cameras inherit
 # The default initializer should probably be called before the rest of the initializer in derived classes
@@ -67,21 +76,15 @@ class CameraBase:
 
     # Define initialization
     def __init__(
-        self,
-        name: str,
-        timestamp: str,
-        csname: str | bool = False,
-        profile: bool = False,
-        videofile: str | bool = True,
-        enabled: bool = True,
+        self, name: str, timestamp: str, params: CameraParams = CameraParams()
     ):
         self.name = name
-        self.enabled = enabled
+        self.enabled = params.enabled
         if not CameraBase.stream:
-            csname = False
+            params.csname = False
         if not CameraBase.save:
-            videofile = None
-        self.profile = profile
+            params.videofile = None
+        self.profile = params.profile
         self.name = name
 
         # Open a log file
@@ -100,6 +103,7 @@ class CameraBase:
             raise e
 
         self.log_file = open(logFilename, "a")
+        self.log_file.write(f"CAMLOG: {logFilename}\n")
         self.log_file.write("Initializing webcam: {}\n".format(self.name))
         # Initialize instance variables
         self.undistort_img = False
@@ -113,13 +117,15 @@ class CameraBase:
         self.cropBottom = int(self.get_config("CROP_BOTTOM", 0))
 
         # Set up video writer
-        if type(videofile) is bool:
-            if videofile:
-                self.videoFilename = "{}/{}_{}.avi".format(team4121videos, name, timestamp)
+        if type(params.videofile) is bool:
+            if params.videofile:
+                self.videoFilename = "{}/{}_{}.avi".format(
+                    team4121videos, name, timestamp
+                )
             else:
                 self.videoFilename = None
         else:
-            self.videoFilename = videofile
+            self.videoFilename = params.videofile
 
         if self.videoFilename is None:
             self.camWriter = None
@@ -140,7 +146,9 @@ class CameraBase:
                 )
             except Exception as e:
                 self.log_file.write(
-                    "Error opening video writer for {}\n{}\n".format(self.videoFilename, e)
+                    "Error opening video writer for {}\n{}\n".format(
+                        self.videoFilename, e
+                    )
                 )
 
             if self.camWriter.isOpened():
@@ -171,13 +179,13 @@ class CameraBase:
         #    self.distort_coeffs = np.loadtxt(cam_coeffs_file)
         #    self.undistort_img = True
 
-        if type(csname) is bool and csname:
-            csname = self.get_config("NTNAME", self.name.lower())
+        if type(params.csname) is bool and params.csname:
+            params.csname = self.get_config("NTNAME", self.name.lower())
 
-        if csname is not False:
+        if params.csname is not False:
             load_cscore()
             self.cvs = CvSource(
-                csname,
+                params.csname,
                 VideoMode.PixelFormat.kBGR,
                 self.width // self.streamRes,
                 self.height // self.streamRes,
@@ -243,13 +251,7 @@ class CameraBase:
         return True
 
     @staticmethod
-    def init_cam(
-        name: str,
-        timestamp: str,
-        csname: Optional[str] = None,
-        videofile: str | bool = True,
-        profile: bool = False,
-    ):
+    def init_cam(name: str, timestamp: str, params: CameraParams = CameraParams()):
         ty = None
 
         if name in CameraBase.config:
@@ -263,7 +265,7 @@ class CameraBase:
         if ty is None:
             raise KeyError("camera type not specified!")
 
-        return ty(name, timestamp, csname, videofile, profile)
+        return ty(name, timestamp, params)
 
     # Override point for camera
     def read_frame_raw(self) -> (bool, np.ndarray):
@@ -308,7 +310,13 @@ class CameraBase:
                 )
                 x, y, w, h = roi
                 self.frame = self.frame[y : y + h, x : x + w]
-            cv.rectangle(self.frame, (0, self.height - self.cropBottom), (self.width, self.height), (0, 0, 0), -1)
+            cv.rectangle(
+                self.frame,
+                (0, self.height - self.cropBottom),
+                (self.width, self.height),
+                (0, 0, 0),
+                -1,
+            )
         except Exception as read_error:
             # Write error to log
             self.log_file.write(
@@ -363,20 +371,24 @@ class CameraBase:
 
     # Apply vision processors to a single frame
     def use_libs(self, *libs, sleep_if_fail: float = 0.0) -> Tuple[np.ndarray, dict]:
-        if self.enabled:
-            frame = self.read_frame()
-            if self.grabbed:
-                return (
-                    frame,
-                    {
-                        lib.name: lib.find_objects(
-                            frame, self.width, self.height, self.fov
-                        )
-                        for lib in libs
-                        if (lib.name in self.pipes) != self.blacklist
-                    },
-                )
-        time.sleep(sleep_if_fail)
+        try:
+            if self.enabled:
+                frame = self.read_frame()
+                if self.grabbed:
+                    return (
+                        frame,
+                        {
+                            lib.name: lib.find_objects(
+                                frame, self.width, self.height, self.fov
+                            )
+                            for lib in libs
+                            if (lib.name in self.pipes) != self.blacklist
+                        },
+                    )
+            time.sleep(sleep_if_fail)
+        except Exception as e:
+            self.log_file.write("Error: video processing failure.")
+            self.log_file.write("Error message: {}\n".format(e))
         return (self.frame, dict())
 
     def _use_libs_fn(self, callback, *libs):

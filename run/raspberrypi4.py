@@ -4,11 +4,13 @@
 import sys
 import os
 
+
 def unwrap_or(val, default):
     if val is None:
         return default
     else:
         return val
+
 
 team4121home = os.getenv("TEAM4121HOME", os.getcwd())
 team4121config = os.getenv("TEAM4121CONFIG", "2024")
@@ -37,8 +39,8 @@ import numpy as np
 # Team 4121 module imports
 # import camera.picam
 import camera.frame
-import camera.usb
-from camera.base import CameraBase
+from camera.usb import UsbCamera
+from camera.base import *
 from vision.glob._2024 import *
 from threads import KillableThread
 from flush import flush
@@ -84,7 +86,7 @@ class PollerFn:
         self.count = 0
         self.maxCount = maxCount
 
-    def __call__(self, force = False):
+    def __call__(self, force=False):
         if force or self.count >= self.maxCount:
             self.ret = self.call()
             self.count = 0
@@ -254,12 +256,10 @@ class CameraLoop:
         self,
         name: str,
         table: ntcore.NetworkTable | str | None = None,
-        csname: str | bool = False,
-        videofile: bool = saveVideo,
-        profile: bool = False,
+        params: CameraParams = CameraParams(),
     ):
         self.name = name
-        self.cam = CameraBase.init_cam(name, timeString, csname, profile, videofile)
+        self.cam = CameraBase.init_cam(name, timeString, params)
 
         if table is None:
             table = self.cam.get_config("NTNAME", self.cam.name.lower())
@@ -284,7 +284,7 @@ class CameraLoop:
 
 # Define main processing function
 def main():
-    global timeString, networkTablesConnected
+    global timeString, networkTablesConnected, cameralist
 
     time.sleep(startupSleep)
 
@@ -296,21 +296,30 @@ def main():
     safeName = cameralist.replace(",", "_")
     logFilename = "{}/run/log_{}_{}.txt".format(team4121logs, safeName, timeString)
     linkPath = "{}/run/log_{}_LATEST.txt".format(team4121logs, safeName)
-    if os.path.exists(linkPath):
-        os.unlink(linkPath)
-        flush()
-    try:
-        os.symlink("log_{}_{}.txt".format(safeName, timeString), linkPath)
-    except Exception as e:
-        print(e)
-        raise e
 
     with open(logFilename, "a") as log_file:
         cams = []
         flushLog = PollerFn(lambda: log_file.flush())
         try:
+            log_file.write(f"RUNLOG: {logFilename}\n")
             log_file.write("Run started on {}.\n".format(datetime.datetime.now()))
-            log_file.write("")
+            if os.path.exists(linkPath):
+                os.unlink(linkPath)
+                flush()
+            try:
+                os.symlink("log_{}_{}.txt".format(safeName, timeString), linkPath)
+            except Exception as e:
+                print(e)
+                raise e
+
+            devp = os.getenv("DEVPATH")
+            if devp is not None:
+                cameralist = UsbCamera.name_from_devpath(devp)
+                if cameralist is None:
+                    log_file.write(f"Couldn't find a camera matching {devp}!")
+                    flush()
+                    return
+
             controlTable = None
 
             # Connect NetworkTables
@@ -330,13 +339,14 @@ def main():
                 log_file.write("Error message: {}\n".format(e))
 
             log_file.write(
-                "connected to table\n"
+                "Connected to table\n"
                 if ntIsConnected(True)
                 else "Failed to connect to table\n"
             )
 
             def checkStopFn():
                 if ntIsConnected() and controlTable.getNumber("RobotStop", 0) == 1:
+                    log_file.write("Received stop signal from NT\n")
                     stop = True
 
             checkStop = PollerFn(checkStopFn)
@@ -362,6 +372,7 @@ def main():
 
                 # Check for stop code from keyboard (for testing)
                 if videoTesting and cv.waitKey(1) == 27:
+                    log_file.write("Received stop signal from ESC\n")
                     break
 
                 # Check for stop code from network tables
@@ -390,14 +401,16 @@ def main():
             # Close all open windows (for testing)
             if videoTesting:
                 cv.destroyAllWindows()
-            
+
             for cam in cams:
                 cam.cam.kill = True
 
             for thread in threads:
                 thread.join(1.0)
                 if thread.is_alive():
-                    log_file.write(f"thread {thread.name}({thread.ident}) still running after sent kill command\n")
+                    log_file.write(
+                        f"thread {thread.name}({thread.ident}) still running after sent kill command\n"
+                    )
 
             for cam in cams:
                 cam.cam.close()
@@ -411,6 +424,7 @@ def main():
             log_file.write(f"An exception occured: {e}\n")
         finally:
             flush()
+
 
 if __name__ == "__main__":
 
