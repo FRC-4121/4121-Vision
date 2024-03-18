@@ -316,7 +316,7 @@ def main():
             if devp is not None:
                 cameralist = UsbCamera.name_from_devpath(devp)
                 if cameralist is None:
-                    log_file.write(f"Couldn't find a camera matching {devp}!")
+                    log_file.write(f"Couldn't find a camera matching {devp}!\n")
                     flush()
                     return
 
