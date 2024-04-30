@@ -58,8 +58,8 @@ calibration_dir = team4121home + "config" + team4121config
 
 CameraParams = namedtuple(
     "CameraParams",
-    ("csname", "profile", "videofile", "enabled"),
-    defaults=(False, False, True, True),
+    ("csname", "profile", "videofile", "enabled", "devname"),
+    defaults=(False, False, True, True, None),
 )
 
 
@@ -269,7 +269,7 @@ class CameraBase:
         return ty(name, timestamp, params)
 
     # Override point for camera
-    def read_frame_raw(self) -> (bool, np.ndarray):
+    def read_frame_raw(self) -> Tuple[bool, np.ndarray]:
         return False, np.zeros((self.width, self.height, 3))
 
     # Some cameras (currently only USB) need further initalization to run after all of the cameras have been initialized. This method will run this.

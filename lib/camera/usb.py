@@ -41,9 +41,7 @@ def find_cams(port: int):
 pi4_re = re.compile(
     "/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.(\\d)/1-1.\\1:1.0.*"
 )
-pi5_re = re.compile(
-    "/devices/platform/axi/1000120000.pcie/1f00(\\d)00000.usb/xhci-hcd.(\\d)/usb(\\d)/\\3-(\\d)/\\3-\\4:1.0.*"
-)
+pi5_re = re.compile("platform-xhci-hcd_(\\d)-usb-0_(\\d)_1_0")
 
 
 # Camera using `cv.VideoCapture`, best for USB camera
@@ -52,18 +50,19 @@ class UsbCamera(CameraBase):
         self, name: str, timestamp: str, params: CameraParams = CameraParams()
     ):
         self.name = name
-        port = self.get_config("PORT", None)
-        if port is not None:
-            port = find_cams(port)
-        if port is None:
-            self.device_id = self.get_config("ID", None)
-            self.device_id = (
-                int(self.device_id)
-                if self.device_id is not None and self.device_id.isnumeric()
-                else self.device_id
-            )
+        if params.devname is not None:
+            self.device_id = params.devname
         else:
-            self.device_id = port
+            port = self.get_config("PORT", None)
+            if port is not None:
+                port = find_cams(port)
+            if port is None:
+                self.device_id = self.get_config("ID", None)
+                self.device_id = (
+                    int(self.device_id)
+                    if self.device_id is not None and self.device_id.isnumeric()
+                    else self.device_id
+                )
 
         super().__init__(name, timestamp, params)
 
@@ -117,19 +116,22 @@ class UsbCamera(CameraBase):
 
     # Get the name of a camera from its device path
     @staticmethod
-    def name_from_devpath(path: str) -> Optional[str]:
+    def setup_from_env(timestamp: str, params: CameraParams = CameraParams()) -> Optional[CameraBase]:
+        if params is None:
+            params = CameraParams()
+        if params.devname is None:
+            params = params._replace(devname=os.getenv("DEVNAME"))
+        id_tag = os.getenv("ID_PATH_TAG", None)
+        if id_tag is None:
+            return None
         port = None
-        if m := pi4_re.fullmatch(path):
+        if m := pi4_re.fullmatch(id_tag):
             n = int(m.group(1))
             port = [None, 1, 0, 3, 2][n]
-        elif m := pi5_re.fullmatch(path):
+        elif m := pi5_re.fullmatch(id_tag):
             n1 = int(m.group(1))
             n2 = int(m.group(2))
-            n3 = int(m.group(3))
-            n4 = int(m.group(4))
-            if n1 - 2 == n2 and n2 * 2 + 1 == n3:
-                n = (n2 << 1) | (n4 * 2 - 2)
-                port = [0, 1, 3, 2][n]
+            port = [0, 2, 1, 3][(n1 * 2) | (n2 // 2)] # trust me bro
 
         if port is not None:
             for name, cfg in CameraBase.config.items():
@@ -138,13 +140,13 @@ class UsbCamera(CameraBase):
                 if "PORT" in cfg:
                     p = cfg["PORT"]
                     if p.isdigit() and int(p) == port:
-                        return name
+                        return CameraBase.init_cam(name, timestamp, params)
 
         for name, cfg in CameraBase.config.items():
             if name == "":
                 continue
-            if "DEVPATH" in cfg and re.fullmatch(cfg["DEVPATH"], path):
-                return name
+            if "ID_PATH" in cfg and re.fullmatch(cfg["ID_PATH_TAG"], id_tag):
+                return CameraBase.init_cam(name, timestamp, params)
 
     def post_init(self):
         if self.evenTry:
@@ -153,7 +155,7 @@ class UsbCamera(CameraBase):
             except cv.error as e:
                 self.log_file.write(f"Error during post-init: {e}\n")
 
-    def read_frame_raw(self) -> (bool, np.ndarray):
+    def read_frame_raw(self) -> Tuple[bool, np.ndarray]:
         if not self.evenTry:
             return False, np.zeros((0, 0, 3))
         if not self.camStream.isOpened():

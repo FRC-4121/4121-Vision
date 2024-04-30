@@ -42,6 +42,7 @@ export TEAM4121CAMERASYNC
 export NT_SERVER_ADDR
 
 if [ "$ID_V4L_CAPABILITIES" = ":capture:" ]; then
+    export PYTHONPATH="/usr/local/lib/python3.11/dist-packages"
     start-stop-daemon --start --pidfile ${PIDBASE}-${ID_PATH_TAG}.pid --make-pidfile --background --exec ${TEAM4121HOME}/run/raspberrypi4.py
     STATUS=$?
     if [ $STATUS != 0 ]; then

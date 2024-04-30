@@ -4,7 +4,7 @@ HEIGHT=480
 # PORT legend:  USB3: top => 1, bottom => 0; USB2: top => 3, bottom => 2
 #
 # Max 20 FPS at 800x600
-FPS=25
+FPS=10
 CAL_FACTOR=1
 RESIZE_FACTOR=2
 BRIGHTNESS=100

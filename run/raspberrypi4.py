@@ -3,7 +3,7 @@
 # System imports
 import sys
 import os
-
+import time
 
 def unwrap_or(val, default):
     if val is None:
@@ -27,9 +27,6 @@ sys.path.append(team4121home + "/lib")
 # sys.path.append('C:\\Users\\timfu\\Documents\\Team4121\\Libraries')
 
 # Module imports
-import datetime
-import time
-import logging
 import cv2 as cv
 from os import getenv
 import ntcore
@@ -44,9 +41,6 @@ from camera.base import *
 from vision.glob._2024 import *
 from threads import KillableThread
 from flush import flush
-
-# Set up basic logging
-logging.basicConfig(level=logging.DEBUG)
 
 # Declare global variables
 cameraFile = team4121home + "/config/" + team4121config + "/CameraSettings.txt"
@@ -78,7 +72,6 @@ nt = ntcore.NetworkTableInstance.getDefault()
 
 stop = False
 
-
 class PollerFn:
     def __init__(self, call: Callable[[], Any], maxCount: int = 50):
         self.ret = call()
@@ -96,7 +89,6 @@ class PollerFn:
 
 
 ntIsConnected = PollerFn(lambda: nt.isConnected())
-
 
 class CameraCallback:
     def __init__(self, table, cam):
@@ -254,12 +246,16 @@ class CameraCallback:
 class CameraLoop:
     def __init__(
         self,
-        name: str,
+        cam: CameraBase | str,
         table: ntcore.NetworkTable | str | None = None,
         params: CameraParams = CameraParams(),
     ):
-        self.name = name
-        self.cam = CameraBase.init_cam(name, timeString, params._replace(videofile=saveVideo))
+        if type(cam) is str:
+            self.name = cam
+            self.cam = CameraBase.init_cam(cam, timeString, params._replace(videofile=saveVideo))
+        else:
+            self.name = cam.name
+            self.cam = cam
 
         if table is None:
             table = self.cam.get_config("NTNAME", self.cam.name.lower())
@@ -281,7 +277,6 @@ class CameraLoop:
     def update_video(self):
         cv.imshow(self.name, self.callback.frame)
 
-
 # Define main processing function
 def main():
     global timeString, networkTablesConnected, cameralist
@@ -291,9 +286,14 @@ def main():
     # Define objects
     CameraBase.read_config_file(cameraFile)
     VisionBase.read_vision_file(visionFile)
-
+    
+    
     # Open a log file
     safeName = cameralist.replace(",", "_")
+    
+    if cam := UsbCamera.setup_from_env(timeString, CameraParams(videofile=saveVideo)):
+        safeName = cam.name
+
     logFilename = "{}/run/log_{}_{}.txt".format(team4121logs, safeName, timeString)
     linkPath = "{}/run/log_{}_LATEST.txt".format(team4121logs, safeName)
 
@@ -302,7 +302,7 @@ def main():
         flushLog = PollerFn(lambda: log_file.flush())
         try:
             log_file.write(f"RUNLOG: {logFilename}\n")
-            log_file.write("Run started on {}.\n".format(datetime.datetime.now()))
+            log_file.write("Run started on {}.\n".format(time.ctime()))
             if os.path.exists(linkPath):
                 os.unlink(linkPath)
                 flush()
@@ -311,14 +311,6 @@ def main():
             except Exception as e:
                 print(e)
                 raise e
-
-            devp = os.getenv("DEVPATH")
-            if devp is not None:
-                cameralist = UsbCamera.name_from_devpath(devp)
-                if cameralist is None:
-                    log_file.write(f"Couldn't find a camera matching {devp}!\n")
-                    flush()
-                    return
 
             controlTable = None
 
@@ -350,7 +342,10 @@ def main():
                     stop = True
 
             checkStop = PollerFn(checkStopFn)
-            cams = list(map(CameraLoop, cameralist.split(",")))
+            if cam is not None:
+                cams = [CameraLoop(cam, timeString)]
+            else:
+                cams = list(map(CameraLoop, cameralist.split(",")))
             threads = []
 
             # post-initializer call, this MUST happen
@@ -419,7 +414,7 @@ def main():
                 thread.kill()
 
             # Close the log file
-            log_file.write("Run stopped on {}.\n".format(datetime.datetime.now()))
+            log_file.write("Run stopped on {}.\n".format(time.ctime()))
         except Exception as e:
             log_file.write(f"An exception occured: {e}\n")
         finally:
