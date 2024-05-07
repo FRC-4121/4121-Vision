@@ -38,9 +38,7 @@ def find_cams(port: int):
             return files[0]
 
 
-pi4_re = re.compile(
-    "/devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.(\\d)/1-1.\\1:1.0.*"
-)
+pi4_re = re.compile("platform-fd500000_pcie-pci-0000_01_00_0-usb-0_1_(\\d)_1_0")
 pi5_re = re.compile("platform-xhci-hcd_(\\d)-usb-0_(\\d)_1_0")
 
 
@@ -63,6 +61,8 @@ class UsbCamera(CameraBase):
                     if self.device_id is not None and self.device_id.isnumeric()
                     else self.device_id
                 )
+            else:
+                self.device_id = None
 
         super().__init__(name, timestamp, params)
 
@@ -78,7 +78,7 @@ class UsbCamera(CameraBase):
             [
                 "v4l2-ctl",
                 "-d",
-                f"/dev/video{self.device_id}",
+                self.device_id if type(self.device_id) and "/dev/video" in self.device_id else f"/dev/video{self.device_id}",
                 "-c",
                 "auto_exposure=1",
                 "-c",
